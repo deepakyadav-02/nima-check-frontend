@@ -94,26 +94,38 @@
 }
 
 .admit-card {
-  padding: 20px;
+  padding: 15px;
   border: 2px solid #000;
   margin-bottom: 20px;
   background: white;
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto 20px;
+  font-size: 12px;
+  min-width: 700px; /* Ensure minimum width for consistent design */
+  box-sizing: border-box;
+}
+
+/* PDF generation specific styles */
+.admit-card.pdf-mode {
+  width: 750px !important;
+  max-width: 750px !important;
+  font-size: 14px !important;
+  transform: none !important;
+  margin: 0 auto !important;
 }
 
 .card-header {
   display: flex;
   align-items: stretch;
-  margin-bottom: 20px;
-  min-height: 100px;
+  margin-bottom: 15px;
+  min-height: 80px;
   position: relative;
   border-bottom: 2px solid #000;
-  padding-bottom: 15px;
+  padding-bottom: 10px;
 }
 
 .logo-box {
-  width: 90px;
+  width: 70px;
   height: 100%;
   flex-shrink: 0;
   display: flex;
@@ -142,7 +154,7 @@
 }
 
 .header-text h2 {
-  font-size: 20px;
+  font-size: 18px;
   margin: 0;
   padding: 0;
   font-weight: bold;
@@ -150,8 +162,8 @@
 }
 
 .header-text h3 {
-  font-size: 16px;
-  margin: 5px 0 0 0;
+  font-size: 14px;
+  margin: 3px 0 0 0;
   padding: 0;
   font-weight: bold;
   color: #000;
@@ -159,43 +171,44 @@
 
 .details-and-subjects {
   border: 2px solid #000;
-  margin: 20px 0;
+  margin: 15px 0;
   position: relative;
-  padding: 20px;
+  padding: 15px;
 }
 
 .student-details {
   display: flex;
-  gap: 30px;
-  margin-bottom: 20px;
+  gap: 15px; /* Reduced gap to fit better */
+  margin-bottom: 15px;
 }
 
 .details-left {
   flex: 1;
+  min-width: 0; /* Allow flex item to shrink */
 }
 
 .details-right {
   flex-shrink: 0;
-  width: 120px;
+  width: 90px; /* Slightly reduced */
 }
 
 .detail-row {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
 .detail-row .label {
-  width: 200px;
+  width: 160px; /* Reduced from 180px to fit better */
   font-weight: bold;
-  font-size: 14px;
+  font-size: 12px;
   color: #000;
 }
 
 .detail-row .colon {
-  width: 20px;
+  width: 15px;
   text-align: center;
   font-weight: bold;
   color: #000;
@@ -203,14 +216,14 @@
 
 .detail-row .value {
   flex: 1;
-  font-size: 14px;
+  font-size: 12px;
   color: #000;
 }
 
 .core-subject {
   margin-left: auto;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 12px;
   color: #000;
 }
 
@@ -248,8 +261,8 @@
 }
 
 .photo-container {
-  width: 120px;
-  height: 150px;
+  width: 90px; /* Slightly reduced */
+  height: 110px; /* Slightly reduced */
   border: 1px solid #000;
   overflow: hidden;
   background: #fff;
@@ -354,10 +367,10 @@
 
 .subjects-table th,
 .subjects-table td {
-  padding: 12px 8px;
+  padding: 6px 4px; /* Reduced padding to fit better */
   text-align: center;
   border-right: 1px solid #000;
-  font-size: 12px;
+  font-size: 9px; /* Slightly smaller font */
   color: #000;
 }
 
@@ -379,9 +392,9 @@
 }
 
 .undertaking {
-  margin: 20px 0;
+  margin: 15px 0;
   text-align: center;
-  padding: 15px;
+  padding: 10px;
   border: 1px solid #000;
   background: #f8f9fa;
 }
@@ -389,25 +402,25 @@
 .undertaking p {
   margin: 0;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 12px;
   color: #000;
 }
 
 .signatures {
-  margin: 30px 0;
+  margin: 20px 0;
 }
 
 .signature-section {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: 40px;
-  padding: 0 20px;
+  margin-top: 25px; /* Reduced margin */
+  padding: 0 10px; /* Reduced padding */
 }
 
 .principal-sign, 
 .controller-sign {
-  width: 200px;
+  width: 130px; /* Reduced from 150px */
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -429,15 +442,15 @@
 }
 
 .signature-placeholder {
-  width: 150px;
-  height: 50px;
+  width: 100px; /* Reduced from 120px */
+  height: 35px; /* Reduced from 40px */
   border: 1px dashed #ccc;
   background: #f8f9fa;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #000;
-  font-size: 12px;
+  font-size: 9px; /* Smaller font */
   font-weight: bold;
   margin-bottom: 5px;
 }
@@ -460,15 +473,15 @@
 }
 
 .rules-section {
-  margin-top: 20px;
+  margin-top: 15px;
   border-top: 2px solid #000;
-  padding-top: 15px;
+  padding-top: 10px;
 }
 
 .rules-section h3 {
   text-align: center;
-  font-size: 16px;
-  margin-bottom: 15px;
+  font-size: 14px;
+  margin-bottom: 10px;
   font-weight: bold;
   color: #000;
 }
@@ -480,10 +493,10 @@
 }
 
 .rules-section li {
-  font-size: 11px;
-  margin-bottom: 5px;
+  font-size: 10px;
+  margin-bottom: 3px;
   text-align: justify;
-  line-height: 1.4;
+  line-height: 1.3;
   color: #000;
 }
 
@@ -552,21 +565,63 @@
     margin: 0;
     padding: 0;
     border: 1px solid #000;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   /* Hide photo action buttons in PDF */
   .photo-actions {
     display: none !important;
   }
+
+  /* Ensure proper page breaks */
+  .details-and-subjects {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .subjects-table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .rules-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .signatures {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Ensure text doesn't get cut off */
+  .detail-row {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Table row page breaks */
+  .subjects-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Rules list items */
+  .rules-section li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 }
 
 @media (max-width: 768px) {
   .admit-card-container {
-    padding: 10px;
+    overflow-x: auto; /* Allow horizontal scroll on small screens */
   }
   
   .admit-card {
-    padding: 15px;
+    min-width: 700px; /* Maintain minimum width even on small screens */
+    font-size: 12px;
   }
   
   .header-text h2 {
