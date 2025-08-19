@@ -9,8 +9,11 @@ const AdmitCard = ({ user }) => {
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showPreview, setShowPreview] = useState(true); // Changed to true to show preview by default
+  const [showPreview, setShowPreview] = useState(true);
+  const [uploadedPhoto, setUploadedPhoto] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
   const admitCardRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchStudentData();
@@ -50,6 +53,15 @@ const AdmitCard = ({ user }) => {
 
   const generatePDF = () => {
     if (admitCardRef.current) {
+      // Temporarily hide photo action buttons
+      const photoActions = admitCardRef.current.querySelectorAll('.photo-actions');
+      const originalDisplayValues = [];
+      
+      photoActions.forEach((action, index) => {
+        originalDisplayValues[index] = action.style.display;
+        action.style.display = 'none';
+      });
+
       html2canvas(admitCardRef.current, { scale: 2 }).then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF("p", "mm", "a4");
@@ -57,6 +69,11 @@ const AdmitCard = ({ user }) => {
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
         pdf.save(`admit_card_${studentData.autonomousRollNo}.pdf`);
+        
+        // Restore photo action buttons
+        photoActions.forEach((action, index) => {
+          action.style.display = originalDisplayValues[index] || '';
+        });
       });
     }
   };
@@ -78,6 +95,22 @@ const AdmitCard = ({ user }) => {
     if (studentData?.autonomousRollNo?.includes('NAC24')) return 'UG';
     if (studentData?.autonomousRollNo?.includes('111NAC')) return 'PG';
     return 'STUDENT';
+  };
+
+  const getStream = () => {
+    if (!studentData?.Department) return '';
+    
+    const department = studentData.Department.trim();
+    
+    // ARTS departments
+    const artsDepartments = ['Economics', 'Education', 'English', 'History', 'Odia', 'Political Science', 'Psychology', 'Sanskrit'];
+    if (artsDepartments.includes(department)) return 'ARTS';
+    
+    // SCIENCE departments
+    const scienceDepartments = ['Botany', 'Chemistry', 'Geology', 'Mathematics', 'Physics', 'Zoology'];
+    if (scienceDepartments.includes(department)) return 'SCIENCE';
+    
+    return department;
   };
 
   const getSubjects = () => {
@@ -106,13 +139,82 @@ const AdmitCard = ({ user }) => {
   };
 
   const getMajorSubject = () => {
-    if (studentData?.Department === 'BBA') {
-      return studentData['CC-201'] || '';
-    } else if (studentData?.Department && studentData.Department !== 'BBA') {
-      return studentData['Major-3'] || studentData.Course || '';
-    }
-    return '';
+    // Hide major subject for PG students (no department)
+    if (!studentData?.Department) return '';
+    
+    // For BBA and UG students, show the Department
+    return studentData.Department || '';
   };
+
+  const isPGStudent = () => {
+    return studentData?.autonomousRollNo?.includes('111NAC');
+  };
+
+  const handlePhotoUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setPhotoFile(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setUploadedPhoto(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert('Please select an image file');
+      }
+    }
+  };
+
+  const triggerPhotoUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removePhoto = () => {
+    setUploadedPhoto(null);
+    setPhotoFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Debug logging
+  useEffect(() => {
+    if (studentData) {
+      console.log('Student Data:', studentData);
+      console.log('Department:', studentData.Department);
+      console.log('Department trimmed:', studentData.Department?.trim());
+      console.log('Is BBA:', studentData.Department && studentData.Department.trim() === 'BBA');
+      console.log('Autonomous Roll No:', studentData.autonomousRollNo);
+      console.log('VAC-201-I.C value:', studentData['VAC-201-I.C']);
+      console.log('All VAC related fields:', {
+        'VAC-201-I.C': studentData['VAC-201-I.C'],
+        'VAC-201-I.C (bracket notation)': studentData['VAC-201-I.C'],
+        'VAC-201-I.C (dot notation)': studentData['VAC-201-I.C'],
+        'VAC-201-I.C (quoted)': studentData['VAC-201-I.C']
+      });
+      
+      // Log all fields for BBA students
+      if (studentData.Department && studentData.Department.trim() === 'BBA') {
+        console.log('BBA Student Fields:', {
+          'CC-201': studentData['CC-201'],
+          'CC-202': studentData['CC-202'],
+          'CC-203': studentData['CC-203'],
+          'Multi Disciplinary-201': studentData['Multi Disciplinary-201'],
+          'AEC-201': studentData['AEC-201'],
+          'SEC-201': studentData['SEC-201'],
+          'VAC-201-I': studentData['VAC-201-I'],
+          'VAC-201-I.C': studentData['VAC-201-I']?.C
+        });
+        
+        // Check if VAC field exists in the object
+        console.log('All object keys:', Object.keys(studentData));
+        console.log('VAC-201-I field exists:', 'VAC-201-I' in studentData);
+        console.log('VAC-201-I value:', studentData['VAC-201-I']);
+        console.log('VAC-201-I.C value:', studentData['VAC-201-I']?.C);
+      }
+    }
+  }, [studentData]);
 
   if (loading) {
     return (
@@ -145,6 +247,8 @@ const AdmitCard = ({ user }) => {
   const subjects = getSubjects();
   const studentType = getStudentType();
   const majorSubject = getMajorSubject();
+  const stream = getStream();
+  const isPG = isPGStudent();
 
   return (
     <div className="admit-card-container">
@@ -170,31 +274,36 @@ const AdmitCard = ({ user }) => {
               <div className="header-text">
                 <h2>NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h2>
                 <h3>ADMIT CARD (BATCH -2024)</h3>
-                                <h3>EXAMINATION-2025</h3>
-
+                <h3>EXAMINATION-2025</h3>
               </div>
             </div>
 
             <div className="details-and-subjects">
               <div className="student-details">
                 <div className="details-left">
-                  <div className="detail-row">
-                    <span className="label">STREAM</span>
-                    <span className="colon">:</span>
-                    <span className="value">{studentType}</span>
-                  </div>
+                  {!isPG && (
+                    <div className="detail-row">
+                      <span className="label">STREAM</span>
+                      <span className="colon">:</span>
+                      <span className="value">
+                        {stream || studentType}
+                      </span>
+                    </div>
+                  )}
                   <div className="detail-row">
                     <span className="label">EXAM ROLL NUMBER</span>
                     <span className="colon">:</span>
-                    <span className="value">{studentData.autonomousRollNo}</span>
+                    <span className="value">{studentData.rollNo || studentData['College Roll No'] || studentData['Roll No']}</span>
                   </div>
                   <div className="detail-row">
                     <span className="label">COLLEGE NUMBER</span>
                     <span className="colon">:</span>
-                    <span className="value">{studentData.rollNo || studentData['College Roll No'] || studentData['Roll No']}</span>
-                    <span className="core-subject">
-                      MAJOR - {majorSubject}
-                    </span>
+                    <span className="value">{studentData.autonomousRollNo}</span>
+                    {majorSubject && (
+                      <span className="core-subject">
+                        DEPARTMENT - {majorSubject}
+                      </span>
+                    )}
                   </div>
                   <div className="detail-row">
                     <span className="label">NAME OF THE STUDENT</span>
@@ -207,39 +316,113 @@ const AdmitCard = ({ user }) => {
 
                 <div className="details-right">
                   <div className="photo-container">
-                    <div className="photo-box">
-                      <div className="photo-placeholder">
-                        <span>PHOTO</span>
+                    {uploadedPhoto ? (
+                      <div className="photo-display">
+                        <img src={uploadedPhoto} alt="Student Photo" className="student-photo" />
+                        <div className="photo-actions">
+                          <button 
+                            type="button" 
+                            className="change-photo-btn"
+                            onClick={triggerPhotoUpload}
+                          >
+                            Change Photo
+                          </button>
+                          <button 
+                            type="button" 
+                            className="remove-photo-btn"
+                            onClick={removePhoto}
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="photo-upload">
+                        <div className="photo-placeholder">
+                          <span>PHOTO</span>
+                        </div>
+                        <button 
+                          type="button" 
+                          className="upload-photo-btn"
+                          onClick={triggerPhotoUpload}
+                        >
+                          Upload Photo
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      style={{ display: 'none' }}
+                    />
                   </div>
                 </div>
               </div>
 
-              <div className="subjects-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Major CP-1</th>
-                      <th>Major CP-2</th>
-                      <th>Minor P-1</th>
-                      <th>MDC-1</th>
-                      <th>AEC</th>
-                      <th>VAC-1</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>{subjects['Major CP-1']}</td>
-                      <td>{subjects['Major CP-2']}</td>
-                      <td>{subjects['Minor P-1']}</td>
-                      <td>{subjects['MDC-1']}</td>
-                      <td>{subjects['AEC']}</td>
-                      <td>{subjects['VAC-1']}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              {isPG ? (
+                <div className="course-section">
+                  <div className="course-row">
+                    <span className="label">COURSE</span>
+                    <span className="colon">:</span>
+                    <span className="value">{studentData.Course || ''}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="subjects-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
+                          <>
+                            <th>CC-201</th>
+                            <th>CC-202</th>
+                            <th>CC-203</th>
+                            <th>Multi Disciplinary-201</th>
+                            <th>AEC-201</th>
+                            <th>SEC-201</th>
+                            <th>VAC-201-I.C</th>
+                          </>
+                        ) : (
+                          <>
+                            <th>Major-3</th>
+                            <th>Major-4</th>
+                            <th>MINOR-2</th>
+                            <th>Multi Disciplinary-2</th>
+                            <th>AEC-2</th>
+                            <th>SEC-I</th>
+                          </>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
+                          <>
+                            <td>{studentData['CC-201'] || ''}</td>
+                            <td>{studentData['CC-202'] || ''}</td>
+                            <td>{studentData['CC-203'] || ''}</td>
+                            <td>{studentData['Multi Disciplinary-201'] || ''}</td>
+                            <td>{studentData['AEC-201'] || ''}</td>
+                            <td>{studentData['SEC-201'] || ''}</td>
+                            <td>{studentData['VAC-201-I']?.C || ''}</td>
+                          </>
+                        ) : (
+                          <>
+                            <td>{studentData['Major-3'] || ''}</td>
+                            <td>{studentData['Major-4'] || ''}</td>
+                            <td>{studentData['MINOR-2'] || ''}</td>
+                            <td>{studentData['Multi Disciplinary-2'] || ''}</td>
+                            <td>{studentData['AEC-2'] || ''}</td>
+                            <td>{studentData['SEC-I'] || ''}</td>
+                          </>
+                        )}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             <div className="undertaking">
@@ -249,9 +432,7 @@ const AdmitCard = ({ user }) => {
             <div className="signatures">
               <div className="signature-section">
                 <div className="principal-sign">
-                  <div className="signature-placeholder">
-                    <span>PRINCIPAL</span>
-                  </div>
+                  <img src="/PRINCIPAL.jpg" alt="Principal Signature" className="signature-image"/>
                   <p>PRINCIPAL/CENTRE SUPERINTENDENT</p>
                 </div>
                 
@@ -260,9 +441,7 @@ const AdmitCard = ({ user }) => {
                     <div className="signature-box"></div>
                     <p>Signature of the Student in Full</p>
                   </div>
-                  <div className="signature-placeholder">
-                    <span>CONTROLLER</span>
-                  </div>
+                  <img src="/EXAMINER.jpg" alt="Controller Signature" className="signature-image"/>
                   <p>CONTROLLER OF EXAMINATIONS</p>
                 </div>
               </div>

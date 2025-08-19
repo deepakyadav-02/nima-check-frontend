@@ -120,7 +120,7 @@
   align-items: center;
   justify-content: center;
   background: #fff;
-  padding: 5px;
+  padding: 2px;
   overflow: hidden;
   border: 1px solid #ddd;
 }
@@ -128,7 +128,7 @@
 .college-logo {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
 }
 
@@ -214,6 +214,39 @@
   color: #000;
 }
 
+.course-section {
+  border-top: 2px solid #000;
+  padding: 20px;
+}
+
+.course-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.course-row .label {
+  width: 200px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #000;
+}
+
+.course-row .colon {
+  width: 20px;
+  text-align: center;
+  font-weight: bold;
+  color: #000;
+}
+
+.course-row .value {
+  flex: 1;
+  font-size: 14px;
+  color: #000;
+}
+
 .photo-container {
   width: 120px;
   height: 150px;
@@ -221,18 +254,21 @@
   overflow: hidden;
   background: #fff;
   margin-top: 10px;
+  position: relative;
 }
 
-.photo-box {
-  width: 100%;
+.photo-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   height: 100%;
-  background-size: cover;
-  background-position: center;
+  gap: 10px;
 }
 
 .photo-placeholder {
-  width: 100%;
-  height: 100%;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -240,14 +276,71 @@
   border: 1px dashed #ccc;
   color: #000;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 10px;
 }
 
-.photo-box img {
+.upload-photo-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.upload-photo-btn:hover {
+  background: #0056b3;
+}
+
+.photo-display {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.student-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.photo-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px;
+  display: flex;
+  gap: 2px;
+}
+
+.change-photo-btn,
+.remove-photo-btn {
+  flex: 1;
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 2px;
+  font-size: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.change-photo-btn:hover {
+  background: #0056b3;
+}
+
+.remove-photo-btn {
+  background: #dc3545;
+}
+
+.remove-photo-btn:hover {
+  background: #c82333;
 }
 
 .subjects-table {
@@ -347,6 +440,16 @@
   font-size: 12px;
   font-weight: bold;
   margin-bottom: 5px;
+}
+
+.signature-image {
+  width: 150px;
+  height: 50px;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 5px;
+  border: 1px solid #ddd;
+  background: #fff;
 }
 
 .signature-box {
@@ -449,6 +552,11 @@
     margin: 0;
     padding: 0;
     border: 1px solid #000;
+  }
+
+  /* Hide photo action buttons in PDF */
+  .photo-actions {
+    display: none !important;
   }
 }
 
