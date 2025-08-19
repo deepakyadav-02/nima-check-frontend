@@ -1,35 +1,89 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import Login from './components/Login';
+import AdmitCard from './components/AdmitCard';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Check if user is already logged in (from localStorage)
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      console.log('User already logged in from localStorage:', userData);
+      setIsAuthenticated(true);
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleLogin = (userData, token) => {
+    console.log('Login successful:', userData);
+    console.log('Token received:', token);
+    setIsAuthenticated(true);
+    setUser(userData);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    console.log('Authentication state updated, user should be redirected');
+  };
+
+  const handleLogout = () => {
+    console.log('Logging out user');
+    setIsAuthenticated(false);
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  };
+
+  console.log('Current auth state:', { isAuthenticated, user });
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Router>
+      <div className="App">
+        <header className="app-header">
+          <h1>Student Management System</h1>
+          {isAuthenticated && (
+            <div className="user-info">
+              <span>Welcome, {user?.name || user?.autonomousRollNo}</span>
+              <button onClick={handleLogout} className="logout-btn">Logout</button>
+            </div>
+          )}
+        </header>
+
+        <main className="app-main">
+          <Routes>
+            <Route 
+              path="/" 
+              element={
+                isAuthenticated ? 
+                <Navigate to="/admit-card" replace /> : 
+                <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/login" 
+              element={
+                isAuthenticated ? 
+                <Navigate to="/admit-card" replace /> : 
+                <Login onLogin={handleLogin} />
+              } 
+            />
+            <Route 
+              path="/admit-card" 
+              element={
+                isAuthenticated ? 
+                <AdmitCard user={user} /> : 
+                <Navigate to="/login" replace />
+              } 
+            />
+          </Routes>
+        </main>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </Router>
+  );
 }
 
-export default App
+export default App;
