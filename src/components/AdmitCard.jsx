@@ -62,7 +62,7 @@ const AdmitCard = ({ user }) => {
         action.style.display = 'none';
       });
 
-      // Store original styles to restore later
+      // Store original styles
       const originalStyles = {
         width: admitCardRef.current.style.width,
         maxWidth: admitCardRef.current.style.maxWidth,
@@ -70,21 +70,19 @@ const AdmitCard = ({ user }) => {
         fontSize: admitCardRef.current.style.fontSize
       };
 
-      // Force original full-size dimensions for PDF generation
-      admitCardRef.current.style.width = '750px';
-      admitCardRef.current.style.maxWidth = '750px';
-      admitCardRef.current.style.transform = 'none';
-      admitCardRef.current.style.fontSize = '14px';
+      // Use the actual rendered dimensions from the preview (don't force width)
+      const actualWidth = admitCardRef.current.offsetWidth;
+      const actualHeight = admitCardRef.current.offsetHeight;
 
       // Use higher scale for better quality and ensure all content is captured
       html2canvas(admitCardRef.current, { 
-        scale: 2.5,
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         scrollX: 0,
         scrollY: 0,
-        width: 750, // Reduced width to fit better in A4
-        height: admitCardRef.current.scrollHeight,
+        width: actualWidth, // Use actual rendered width
+        height: actualHeight, // Use actual rendered height
         backgroundColor: '#ffffff'
       }).then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
@@ -93,48 +91,56 @@ const AdmitCard = ({ user }) => {
         // A4 dimensions in mm
         const pageWidth = 210;
         const pageHeight = 297;
-        const margin = 20; // Increased margin to prevent right side cutoff
+        const margin = 8; // Balanced margins
         
-        // Calculate image dimensions to fit within margins (reduced size)
+        // Calculate image dimensions to fit within margins
         const imgWidth = pageWidth - (2 * margin);
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        // Calculate how many pages we need
-        const availablePageHeight = pageHeight - (2 * margin);
-        const totalPages = Math.ceil(imgHeight / availablePageHeight);
-        
-        // Add image to PDF with proper page handling
-        let heightLeft = imgHeight;
-        let position = 0;
-        
-        for (let i = 0; i < totalPages; i++) {
-          if (i > 0) {
-            pdf.addPage();
-          }
-          
-          // Calculate what portion of the image to show on this page
-          const pageImgHeight = Math.min(availablePageHeight, heightLeft);
-          
-          // Center the image on the page with proper margins
+        // Check if we can fit everything on one page
+        if (imgHeight <= (pageHeight - (2 * margin))) {
+          // Everything fits on one page - center it
           const x = margin;
-          const y = margin;
+          const y = (pageHeight - imgHeight) / 2; // Center vertically
+          pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+        } else {
+          // Need multiple pages - calculate how many
+          const availablePageHeight = pageHeight - (2 * margin);
+          const totalPages = Math.ceil(imgHeight / availablePageHeight);
           
-          // Add the image portion to this page (only the current portion)
-          pdf.addImage(
-            imgData, 
-            "PNG", 
-            x, 
-            y, 
-            imgWidth, 
-            pageImgHeight,
-            undefined,
-            'FAST',
-            0,
-            position
-          );
+          // Add image to PDF with proper page handling
+          let heightLeft = imgHeight;
+          let position = 0;
           
-          heightLeft -= pageImgHeight;
-          position += pageImgHeight;
+          for (let i = 0; i < totalPages; i++) {
+            if (i > 0) {
+              pdf.addPage();
+            }
+            
+            // Calculate what portion of the image to show on this page
+            const pageImgHeight = Math.min(availablePageHeight, heightLeft);
+            
+            // Center the image horizontally on the page
+            const x = margin;
+            const y = margin;
+            
+            // Add the image portion to this page (only the current portion)
+            pdf.addImage(
+              imgData, 
+              "PNG", 
+              x, 
+              y, 
+              imgWidth, 
+              pageImgHeight,
+              undefined,
+              'FAST',
+              0,
+              position
+            );
+            
+            heightLeft -= pageImgHeight;
+            position += pageImgHeight;
+          }
         }
         
         pdf.save(`admit_card_${studentData.autonomousRollNo}.pdf`);
