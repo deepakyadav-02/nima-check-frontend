@@ -22,23 +22,108 @@ const Login = ({ onLogin }) => {
   // Convert YYYY-MM-DD to DD-MM-YYYY format
   const formatDateForBackend = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    
+    try {
+      // Handle different date formats
+      let date;
+      if (dateString.includes('-')) {
+        // If it's already in YYYY-MM-DD format
+        date = new Date(dateString);
+      } else if (dateString.includes('/')) {
+        // If it's in MM/DD/YYYY format (mobile might send this)
+        const parts = dateString.split('/');
+        date = new Date(parts[2], parts[0] - 1, parts[1]);
+      } else {
+        // Fallback to direct Date constructor
+        date = new Date(dateString);
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        throw new Error('Invalid date');
+      }
+      
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return dateString; // Return original if formatting fails
+    }
+  };
+
+  // Validate date format (dd-mm-yyyy)
+  const validateDateFormat = (dateString) => {
+    if (!dateString) return false;
+    
+    // Check if it matches dd-mm-yyyy format
+    const dateRegex = /^(\d{2})-(\d{2})-(\d{4})$/;
+    const match = dateString.match(dateRegex);
+    
+    if (!match) return false;
+    
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+    
+    // Validate day, month, year ranges
+    if (day < 1 || day > 31) return false;
+    if (month < 1 || month > 12) return false;
+    if (year < 1900 || year > 2100) return false;
+    
+    // Additional validation for specific months
+    const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (month === 2) {
+      // February - check for leap year
+      const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+      if (day > (isLeapYear ? 29 : 28)) return false;
+    } else if (day > daysInMonth[month - 1]) {
+      return false;
+    }
+    
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Remove focus from any input fields to prevent date picker from opening
+    if (document.activeElement) {
+      document.activeElement.blur();
+    }
+    
     setLoading(true);
     setError('');
 
     try {
+      // Validate date input
+      if (!formData.dob) {
+        setError('Please select your date of birth');
+        setLoading(false);
+        return;
+      }
+
       // Convert the date format before sending to backend
+      const formattedDob = formatDateForBackend(formData.dob);
+      
+      if (!formattedDob) {
+        setError('Invalid date format. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Validate the formatted date is in dd-mm-yyyy format
+      if (!validateDateFormat(formattedDob)) {
+        setError('Date must be in DD-MM-YYYY format (e.g., 15-07-2002)');
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         autonomousRollNo: formData.autonomousRollNo,
-        dob: formatDateForBackend(formData.dob)
+        dob: formattedDob
       };
 
       console.log('Sending login payload:', payload);
@@ -92,16 +177,22 @@ const Login = ({ onLogin }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="dob">Date of Birth</label>
+            <label htmlFor="dob">Date of Birth (DD-MM-YYYY)</label>
             <input
               type="date"
               id="dob"
               name="dob"
               value={formData.dob}
               onChange={handleInputChange}
+              onBlur={() => {
+                // Ensure date input loses focus when form is submitted
+                if (document.activeElement === document.getElementById('dob')) {
+                  document.getElementById('dob').blur();
+                }
+              }}
               required
             />
-            <small>Select your date of birth (will be converted to DD-MM-YYYY format)</small>
+            <small>Select your date of birth. Will be converted to DD-MM-YYYY format (e.g., 15-07-2002)</small>
           </div>
 
           {error && (
@@ -114,6 +205,13 @@ const Login = ({ onLogin }) => {
             type="submit" 
             className="login-btn" 
             disabled={loading}
+            onClick={(e) => {
+              // Ensure date input loses focus when button is clicked
+              const dobInput = document.getElementById('dob');
+              if (dobInput && document.activeElement === dobInput) {
+                dobInput.blur();
+              }
+            }}
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>

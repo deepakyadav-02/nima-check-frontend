@@ -62,6 +62,44 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* Mobile-specific date input improvements */
+.form-group input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 44px; /* Better touch target */
+}
+
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
+}
+
+.form-group input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+}
+
+.form-group input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+.form-group input[type="date"]::-webkit-datetime-edit-text {
+  padding: 0 2px;
+}
+
+.form-group input[type="date"]::-webkit-datetime-edit-month-field,
+.form-group input[type="date"]::-webkit-datetime-edit-day-field,
+.form-group input[type="date"]::-webkit-datetime-edit-year-field {
+  padding: 0 2px;
+}
+
 .form-group small {
   display: block;
   margin-top: 5px;
@@ -91,6 +129,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 10px;
+  position: relative;
+  z-index: 10;
 }
 
 .login-btn:hover:not(:disabled) {
@@ -102,6 +142,11 @@
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
+}
+
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 5px 10px rgba(102, 126, 234, 0.3);
 }
 
 .login-help {
