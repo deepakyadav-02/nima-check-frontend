@@ -62,110 +62,75 @@ const AdmitCard = ({ user }) => {
         action.style.display = 'none';
       });
 
-      // Store original styles
-      const originalStyles = {
-        width: admitCardRef.current.style.width,
-        maxWidth: admitCardRef.current.style.maxWidth,
-        transform: admitCardRef.current.style.transform,
-        fontSize: admitCardRef.current.style.fontSize
-      };
+      // Set mobile-friendly dimensions for better PDF generation
+      const originalWidth = admitCardRef.current.style.width;
+      const originalMaxWidth = admitCardRef.current.style.maxWidth;
+      
+      // Force desktop-like dimensions for consistent PDF generation
+      admitCardRef.current.style.width = '800px';
+      admitCardRef.current.style.maxWidth = '800px';
 
-      // Use the actual rendered dimensions from the preview (don't force width)
-      const actualWidth = admitCardRef.current.offsetWidth;
-      const actualHeight = admitCardRef.current.offsetHeight;
-
-      // Use higher scale for better quality and ensure all content is captured
       html2canvas(admitCardRef.current, { 
         scale: 2,
+        width: 800,
+        height: undefined,
         useCORS: true,
-        allowTaint: true,
-        scrollX: 0,
-        scrollY: 0,
-        width: actualWidth, // Use actual rendered width
-        height: actualHeight, // Use actual rendered height
-        backgroundColor: '#ffffff'
+        allowTaint: true
       }).then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF("p", "mm", "a4");
         
-        // A4 dimensions in mm
-        const pageWidth = 210;
-        const pageHeight = 297;
-        const margin = 8; // Balanced margins
-        
-        // Calculate image dimensions to fit within margins
-        const imgWidth = pageWidth - (2 * margin);
+        // Calculate dimensions
+        const imgWidth = 210; // A4 width in mm
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        // Check if we can fit everything on one page
-        if (imgHeight <= (pageHeight - (2 * margin))) {
-          // Everything fits on one page - center it
-          const x = margin;
-          const y = (pageHeight - imgHeight) / 2; // Center vertically
-          pdf.addImage(imgData, "PNG", x, y, imgWidth, imgHeight);
+        // Check if content fits on one page
+        const maxHeight = 297; // A4 height in mm
+        
+        if (imgHeight <= maxHeight) {
+          // Single page
+          pdf.addImage(imgData, "PNG", 8, 8, imgWidth - 16, imgHeight - 16);
         } else {
-          // Need multiple pages - calculate how many
-          const availablePageHeight = pageHeight - (2 * margin);
-          const totalPages = Math.ceil(imgHeight / availablePageHeight);
+          // Multi-page - split content across pages
+          let remainingHeight = imgHeight;
+          let currentY = 0;
+          let pageNumber = 1;
           
-          // Add image to PDF with proper page handling
-          let heightLeft = imgHeight;
-          let position = 0;
-          
-          for (let i = 0; i < totalPages; i++) {
-            if (i > 0) {
+          while (remainingHeight > 0) {
+            const pageHeight = Math.min(remainingHeight, maxHeight);
+            const sourceY = currentY * canvas.width / imgWidth;
+            const sourceHeight = pageHeight * canvas.width / imgWidth;
+            
+            // Create a new canvas for this page
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = canvas.width;
+            pageCanvas.height = sourceHeight;
+            const ctx = pageCanvas.getContext('2d');
+            
+            // Draw the portion of the image for this page
+            ctx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
+            
+            const pageImgData = pageCanvas.toDataURL("image/png");
+            pdf.addImage(pageImgData, "PNG", 8, 8, imgWidth - 16, pageHeight - 16);
+            
+            remainingHeight -= pageHeight;
+            currentY += pageHeight;
+            
+            // Add new page if there's more content
+            if (remainingHeight > 0) {
               pdf.addPage();
+              pageNumber++;
             }
-            
-            // Calculate what portion of the image to show on this page
-            const pageImgHeight = Math.min(availablePageHeight, heightLeft);
-            
-            // Center the image horizontally on the page
-            const x = margin;
-            const y = margin;
-            
-            // Add the image portion to this page (only the current portion)
-            pdf.addImage(
-              imgData, 
-              "PNG", 
-              x, 
-              y, 
-              imgWidth, 
-              pageImgHeight,
-              undefined,
-              'FAST',
-              0,
-              position
-            );
-            
-            heightLeft -= pageImgHeight;
-            position += pageImgHeight;
           }
         }
         
         pdf.save(`admit_card_${studentData.autonomousRollNo}.pdf`);
         
         // Restore original styles
-        admitCardRef.current.style.width = originalStyles.width;
-        admitCardRef.current.style.maxWidth = originalStyles.maxWidth;
-        admitCardRef.current.style.transform = originalStyles.transform;
-        admitCardRef.current.style.fontSize = originalStyles.fontSize;
+        admitCardRef.current.style.width = originalWidth;
+        admitCardRef.current.style.maxWidth = originalMaxWidth;
         
         // Restore photo action buttons
-        photoActions.forEach((action, index) => {
-          action.style.display = originalDisplayValues[index] || '';
-        });
-      }).catch((error) => {
-        console.error('PDF generation error:', error);
-        alert('Error generating PDF. Please try again.');
-        
-        // Restore original styles on error
-        admitCardRef.current.style.width = originalStyles.width;
-        admitCardRef.current.style.maxWidth = originalStyles.maxWidth;
-        admitCardRef.current.style.transform = originalStyles.transform;
-        admitCardRef.current.style.fontSize = originalStyles.fontSize;
-        
-        // Restore photo action buttons on error
         photoActions.forEach((action, index) => {
           action.style.display = originalDisplayValues[index] || '';
         });
