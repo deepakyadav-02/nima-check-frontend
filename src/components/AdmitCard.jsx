@@ -5,7 +5,7 @@ import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../config';
 import './AdmitCard.css';
 
-const AdmitCard = ({ user }) => {
+const AdmitCard = ({ user, onReturnToLogin }) => {
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -62,17 +62,24 @@ const AdmitCard = ({ user }) => {
         action.style.display = 'none';
       });
 
-      // Set mobile-friendly dimensions for better PDF generation
+      // Set compact dimensions for single-page PDF generation
       const originalWidth = admitCardRef.current.style.width;
       const originalMaxWidth = admitCardRef.current.style.maxWidth;
+      const originalPadding = admitCardRef.current.style.padding;
+      const originalMargin = admitCardRef.current.style.margin;
       
-      // Force desktop-like dimensions for consistent PDF generation
-      admitCardRef.current.style.width = '800px';
-      admitCardRef.current.style.maxWidth = '800px';
+      // Force compact dimensions for single-page PDF
+      admitCardRef.current.style.width = '700px';
+      admitCardRef.current.style.maxWidth = '700px';
+      admitCardRef.current.style.padding = '10px';
+      admitCardRef.current.style.margin = '0';
+
+      // Add compact PDF class
+      admitCardRef.current.classList.add('pdf-compact');
 
       html2canvas(admitCardRef.current, { 
         scale: 2,
-        width: 800,
+        width: 700,
         height: undefined,
         useCORS: true,
         allowTaint: true
@@ -80,48 +87,26 @@ const AdmitCard = ({ user }) => {
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF("p", "mm", "a4");
         
-        // Calculate dimensions
-        const imgWidth = 210; // A4 width in mm
+        // Calculate dimensions for single page
+        const imgWidth = 190; // A4 width in mm (with margins)
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
         // Check if content fits on one page
-        const maxHeight = 297; // A4 height in mm
+        const maxHeight = 270; // A4 height in mm (with margins)
         
         if (imgHeight <= maxHeight) {
-          // Single page
-          pdf.addImage(imgData, "PNG", 8, 8, imgWidth - 16, imgHeight - 16);
+          // Single page - center the content
+          const yOffset = (297 - imgHeight) / 2; // Center vertically
+          pdf.addImage(imgData, "PNG", 10, yOffset, imgWidth, imgHeight);
         } else {
-          // Multi-page - split content across pages
-          let remainingHeight = imgHeight;
-          let currentY = 0;
-          let pageNumber = 1;
+          // If still too large, scale down to fit on one page
+          const scaleFactor = maxHeight / imgHeight;
+          const scaledWidth = imgWidth * scaleFactor;
+          const scaledHeight = maxHeight;
+          const xOffset = (210 - scaledWidth) / 2; // Center horizontally
+          const yOffset = (297 - scaledHeight) / 2; // Center vertically
           
-          while (remainingHeight > 0) {
-            const pageHeight = Math.min(remainingHeight, maxHeight);
-            const sourceY = currentY * canvas.width / imgWidth;
-            const sourceHeight = pageHeight * canvas.width / imgWidth;
-            
-            // Create a new canvas for this page
-            const pageCanvas = document.createElement('canvas');
-            pageCanvas.width = canvas.width;
-            pageCanvas.height = sourceHeight;
-            const ctx = pageCanvas.getContext('2d');
-            
-            // Draw the portion of the image for this page
-            ctx.drawImage(canvas, 0, sourceY, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
-            
-            const pageImgData = pageCanvas.toDataURL("image/png");
-            pdf.addImage(pageImgData, "PNG", 8, 8, imgWidth - 16, pageHeight - 16);
-            
-            remainingHeight -= pageHeight;
-            currentY += pageHeight;
-            
-            // Add new page if there's more content
-            if (remainingHeight > 0) {
-              pdf.addPage();
-              pageNumber++;
-            }
-          }
+          pdf.addImage(imgData, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
         }
         
         pdf.save(`admit_card_${studentData.autonomousRollNo}.pdf`);
@@ -129,6 +114,11 @@ const AdmitCard = ({ user }) => {
         // Restore original styles
         admitCardRef.current.style.width = originalWidth;
         admitCardRef.current.style.maxWidth = originalMaxWidth;
+        admitCardRef.current.style.padding = originalPadding;
+        admitCardRef.current.style.margin = originalMargin;
+        
+        // Remove compact PDF class
+        admitCardRef.current.classList.remove('pdf-compact');
         
         // Restore photo action buttons
         photoActions.forEach((action, index) => {
@@ -317,12 +307,20 @@ const AdmitCard = ({ user }) => {
           <h2>Your Admit Card</h2>
           <p>Welcome, {studentData.name || studentData['Name of the Students'] || studentData['Applicant Name']}</p>
           <p>Roll No: {studentData.autonomousRollNo}</p>
-          <button
-            onClick={() => setShowPreview(true)}
-            className="preview-btn"
-          >
-            View Admit Card
-          </button>
+          <div className="preview-controls-buttons">
+            <button
+              onClick={() => setShowPreview(true)}
+              className="preview-btn"
+            >
+              View Admit Card
+            </button>
+            <button
+              onClick={onReturnToLogin}
+              className="return-login-btn"
+            >
+              Return to Login
+            </button>
+          </div>
         </div>
       ) : (
         <div className="preview-container">
@@ -541,6 +539,13 @@ const AdmitCard = ({ user }) => {
               onClick={generatePDF}
             >
               Download as PDF
+            </button>
+            <button
+              type="button"
+              className="return-login-btn"
+              onClick={onReturnToLogin}
+            >
+              Return to Login
             </button>
           </div>
         </div>
