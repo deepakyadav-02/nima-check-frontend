@@ -1,22 +1,75 @@
-import { useState } from 'react';
+import React, { useState } from "react";
 import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../config';
-import './Login.css';
+import "./Login.css";
 
-const Login = ({ onLogin }) => {
-  const [formData, setFormData] = useState({
-    autonomousRollNo: '',
-    dob: ''
-  });
+export default function Login({ onLogin }) {
+  const [rollNumber, setRollNumber] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    setLoading(true);
+    setError('');
+
+    try {
+      // Validate date input
+      if (!dateOfBirth) {
+        setError('Please select your date of birth');
+        setLoading(false);
+        return;
+      }
+
+      // Convert the date format before sending to backend
+      const formattedDob = formatDateForBackend(dateOfBirth);
+      
+      if (!formattedDob) {
+        setError('Invalid date format. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Validate the formatted date is in dd-mm-yyyy format
+      if (!validateDateFormat(formattedDob)) {
+        setError('Date must be in DD-MM-YYYY format (e.g., 15-07-2002)');
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
+        autonomousRollNo: rollNumber,
+        dob: formattedDob
+      };
+
+      console.log('Sending login payload:', payload);
+      const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.LOGIN}`, payload);
+      
+      console.log('Login API response:', response.data);
+      
+      // Backend returns 'user' and 'token', not 'student' and 'success'
+      if (response.data.token && response.data.user) {
+        console.log('Login successful, calling onLogin with:', response.data.user, response.data.token);
+        onLogin(response.data.user, response.data.token);
+      } else {
+        setError(response.data.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.status === 404) {
+        setError('Student not found. Please check your Roll No and Date of Birth.');
+      } else if (err.response?.status === 401) {
+        setError('Invalid credentials. Please check your Roll No and Date of Birth.');
+      } else {
+        setError('Login failed. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Convert YYYY-MM-DD to DD-MM-YYYY format
@@ -85,114 +138,53 @@ const Login = ({ onLogin }) => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Remove focus from any input fields to prevent date picker from opening
-    if (document.activeElement) {
-      document.activeElement.blur();
-    }
-    
-    setLoading(true);
-    setError('');
-
-    try {
-      // Validate date input
-      if (!formData.dob) {
-        setError('Please select your date of birth');
-        setLoading(false);
-        return;
-      }
-
-      // Convert the date format before sending to backend
-      const formattedDob = formatDateForBackend(formData.dob);
-      
-      if (!formattedDob) {
-        setError('Invalid date format. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      // Validate the formatted date is in dd-mm-yyyy format
-      if (!validateDateFormat(formattedDob)) {
-        setError('Date must be in DD-MM-YYYY format (e.g., 15-07-2002)');
-        setLoading(false);
-        return;
-      }
-
-      const payload = {
-        autonomousRollNo: formData.autonomousRollNo,
-        dob: formattedDob
-      };
-
-      console.log('Sending login payload:', payload);
-      const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.LOGIN}`, payload);
-      
-      console.log('Login API response:', response.data);
-      
-      // Backend returns 'user' and 'token', not 'student' and 'success'
-      if (response.data.token && response.data.user) {
-        console.log('Login successful, calling onLogin with:', response.data.user, response.data.token);
-        onLogin(response.data.user, response.data.token);
-      } else {
-        setError(response.data.message || 'Login failed');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.response?.status === 404) {
-        setError('Student not found. Please check your Roll No and Date of Birth.');
-      } else if (err.response?.status === 401) {
-        setError('Invalid credentials. Please check your Roll No and Date of Birth.');
-      } else {
-        setError('Login failed. Please try again later.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="login-container">
       <div className="login-card">
-        <div className="login-header">
-          <h2>Student Login</h2>
-          <p>Enter your credentials to access your admit card</p>
+        {/* College Logo & Name */}
+        <div className="college-header">
+          <h1 className="system-title">Student Management System</h1>
+          <h2 className="login-title">Student Login</h2>
+          <p className="login-subtitle">Enter your credentials to access your admit card</p>
         </div>
 
+        {/* Login Form */}
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="autonomousRollNo">Autonomous Roll Number</label>
+            <label htmlFor="rollNumber">College Roll Number</label>
             <input
+              id="rollNumber"
               type="text"
-              id="autonomousRollNo"
-              name="autonomousRollNo"
-              value={formData.autonomousRollNo}
-              onChange={handleInputChange}
-              placeholder="e.g., NACBBA24-001"
+              value={rollNumber}
+              onChange={(e) => setRollNumber(e.target.value)}
+              placeholder="Enter your roll number"
               required
+              disabled={loading}
+              autoComplete="off"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="dob">Date of Birth (DD-MM-YYYY)</label>
+            <label htmlFor="dateOfBirth">Date of Birth</label>
             <input
+              id="dateOfBirth"
               type="date"
-              id="dob"
-              name="dob"
-              value={formData.dob}
-              onChange={handleInputChange}
-              onBlur={() => {
-                // Ensure date input loses focus when form is submitted
-                if (document.activeElement === document.getElementById('dob')) {
-                  document.getElementById('dob').blur();
+              value={dateOfBirth}
+              onChange={(e) => {
+                setDateOfBirth(e.target.value);
+                // Clear error when user starts typing
+                if (error) {
+                  setError('');
                 }
               }}
               required
+              disabled={loading}
+              max={new Date().toISOString().split('T')[0]} // Prevent future dates
+              min="1900-01-01" // Reasonable minimum date
             />
-            <small>Select your date of birth. Will be converted to DD-MM-YYYY format (e.g., 15-07-2002)</small>
+            <small style={{ fontSize: '12px', color: '#666', marginTop: '4px', display: 'block' }}>
+              Select your date of birth (DD/MM/YYYY format)
+            </small>
           </div>
 
           {error && (
@@ -201,28 +193,16 @@ const Login = ({ onLogin }) => {
             </div>
           )}
 
-          <button 
-            type="submit" 
-            className="login-btn" 
-            disabled={loading}
-            onClick={(e) => {
-              // Ensure date input loses focus when button is clicked
-              const dobInput = document.getElementById('dob');
-              if (dobInput && document.activeElement === dobInput) {
-                dobInput.blur();
-              }
-            }}
-          >
+          <button type="submit" className="login-btn" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        <div className="login-help">
-          <p>Need help? Contact your college administration.</p>
+        {/* Footer */}
+        <div className="footer">
+          <p>© 2025 Nimapara Autonomous College</p>
         </div>
       </div>
     </div>
   );
-};
-
-export default Login;
+}
