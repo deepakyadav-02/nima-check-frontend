@@ -244,6 +244,16 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
         'VAC-201-I.C (quoted)': studentData['VAC-201-I.C']
       });
       
+      // Debug PG student identification
+      console.log('Student Type:', getStudentType());
+      console.log('Is PG Student:', isPGStudent());
+      console.log('Stream:', getStream());
+      console.log('Roll Number Pattern Check:', {
+        'contains BBA': studentData?.autonomousRollNo?.includes('BBA'),
+        'contains NAC24': studentData?.autonomousRollNo?.includes('NAC24'),
+        'contains 111NAC': studentData?.autonomousRollNo?.includes('111NAC')
+      });
+      
       // Log all fields for BBA students
       if (studentData.Department && studentData.Department.trim() === 'BBA') {
         console.log('BBA Student Fields:', {
@@ -344,7 +354,7 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
                       <span className="label">STREAM</span>
                       <span className="colon">:</span>
                       <span className="value">
-                        {stream || studentType}
+                        {stream}
                       </span>
                     </div>
                   )}
