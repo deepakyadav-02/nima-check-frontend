@@ -19,7 +19,7 @@ export default function Dashboard({ user }) {
   const fetchAbcIdSubmission = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${config.API_BASE_URL}/abc-id/my-submission`, {
+      const response = await axios.get(`${config.API_BASE_URL}/api/abc-id/my-submission`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -50,7 +50,7 @@ export default function Dashboard({ user }) {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${config.API_BASE_URL}/abc-id/submit`,
+        `${config.API_BASE_URL}/api/abc-id/submit`,
         { ABC_ID: abcId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -68,12 +68,6 @@ export default function Dashboard({ user }) {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -85,9 +79,6 @@ export default function Dashboard({ user }) {
             {user?.Course && ` | Course: ${user.Course}`}
           </p>
         </div>
-        <button onClick={handleLogout} className="logout-btn-dashboard">
-          Logout
-        </button>
       </div>
 
       <div className="dashboard-content">
