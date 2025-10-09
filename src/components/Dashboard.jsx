@@ -1,8 +1,72 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import config from '../config';
 import './Dashboard.css';
 
 export default function Dashboard({ user }) {
   const navigate = useNavigate();
+  const [abcId, setAbcId] = useState('');
+  const [submittedAbcId, setSubmittedAbcId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [abcMessage, setAbcMessage] = useState('');
+  const [showAbcForm, setShowAbcForm] = useState(false);
+
+  useEffect(() => {
+    fetchAbcIdSubmission();
+  }, []);
+
+  const fetchAbcIdSubmission = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${config.API_URL}/api/abc-id/my-submission`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data.hasSubmitted && response.data.ABC_ID) {
+        setSubmittedAbcId(response.data.ABC_ID);
+      }
+    } catch (error) {
+      console.log('No ABC_ID submission found');
+    }
+  };
+
+  const handleAbcIdSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!abcId.trim()) {
+      setAbcMessage('Please enter ABC_ID');
+      return;
+    }
+
+    if (abcId.length < 5) {
+      setAbcMessage('ABC_ID must be at least 5 characters');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setAbcMessage('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${config.API_URL}/api/abc-id/submit`,
+        { ABC_ID: abcId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setSubmittedAbcId(abcId);
+      setAbcMessage(response.data.message);
+      setShowAbcForm(false);
+      setAbcId('');
+      
+      setTimeout(() => setAbcMessage(''), 3000);
+    } catch (error) {
+      setAbcMessage(error.response?.data?.message || 'Failed to submit ABC_ID');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -119,6 +183,92 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
+        {/* ABC_ID Section */}
+        <div className="abc-id-section">
+          <h3>ABC ID Registration</h3>
+          
+          {submittedAbcId ? (
+            <div className="abc-id-display">
+              <div className="abc-id-success">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <div>
+                  <h4>ABC ID Registered</h4>
+                  <p className="abc-id-value">{submittedAbcId}</p>
+                </div>
+              </div>
+              <button 
+                className="btn-update-abc" 
+                onClick={() => setShowAbcForm(true)}
+              >
+                Update ABC ID
+              </button>
+            </div>
+          ) : (
+            <div className="abc-id-prompt">
+              <p>Register your Academic Bank of Credits (ABC) ID</p>
+              <button 
+                className="btn-add-abc" 
+                onClick={() => setShowAbcForm(true)}
+              >
+                Add ABC ID
+              </button>
+            </div>
+          )}
+
+          {showAbcForm && (
+            <div className="abc-id-form-overlay">
+              <div className="abc-id-form-card">
+                <h3>{submittedAbcId ? 'Update ABC ID' : 'Add ABC ID'}</h3>
+                <form onSubmit={handleAbcIdSubmit}>
+                  <div className="form-group">
+                    <label htmlFor="abcId">ABC ID:</label>
+                    <input
+                      type="text"
+                      id="abcId"
+                      value={abcId}
+                      onChange={(e) => setAbcId(e.target.value)}
+                      placeholder="Enter your ABC ID (min 5 characters)"
+                      required
+                      minLength={5}
+                    />
+                  </div>
+                  
+                  {abcMessage && (
+                    <div className={`abc-message ${abcMessage.includes('success') ? 'success' : 'error'}`}>
+                      {abcMessage}
+                    </div>
+                  )}
+
+                  <div className="form-actions">
+                    <button 
+                      type="button" 
+                      className="btn-cancel"
+                      onClick={() => {
+                        setShowAbcForm(false);
+                        setAbcId('');
+                        setAbcMessage('');
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="btn-submit"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Quick Stats */}
         <div className="quick-stats">
           <h3>Quick Information</h3>
@@ -141,6 +291,12 @@ export default function Dashboard({ user }) {
               <div className="stat-item">
                 <div className="stat-label">Course</div>
                 <div className="stat-value">{user.Course}</div>
+              </div>
+            )}
+            {submittedAbcId && (
+              <div className="stat-item">
+                <div className="stat-label">ABC ID</div>
+                <div className="stat-value">{submittedAbcId}</div>
               </div>
             )}
           </div>
