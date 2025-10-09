@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from 'axios';
-import { API_BASE_URL, API_ENDPOINTS } from '../config';
+import config from '../config';
 import "./Login.css";
 
 export default function Login({ onLogin }) {
@@ -45,7 +45,7 @@ export default function Login({ onLogin }) {
       };
 
       console.log('Sending login payload:', payload);
-      const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.LOGIN}`, payload);
+      const response = await axios.post(`${config.API_BASE_URL}${config.API_ENDPOINTS.LOGIN}`, payload);
       
       console.log('Login API response:', response.data);
       

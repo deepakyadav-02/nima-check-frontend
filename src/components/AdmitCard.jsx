@@ -1,29 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import axios from 'axios';
-import { API_BASE_URL, API_ENDPOINTS } from '../config';
+import config from '../config';
 import './AdmitCard.css';
 
-const AdmitCard = ({ user, onReturnToLogin }) => {
+const AdmitCard = ({ user }) => {
+  const navigate = useNavigate();
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(true);
   const [uploadedPhoto, setUploadedPhoto] = useState(null);
-  const [photoFile, setPhotoFile] = useState(null);
+  const [_photoFile, setPhotoFile] = useState(null);
   const admitCardRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    fetchStudentData();
-  }, []);
-
   const fetchStudentData = async () => {
+    setLoading(true);
+    setError('');
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${API_BASE_URL}${API_ENDPOINTS.ADMIT_CARD}?autonomousRollNo=${user.autonomousRollNo}`,
+        `${config.API_BASE_URL}${config.API_ENDPOINTS.ADMIT_CARD}?autonomousRollNo=${user.autonomousRollNo}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -50,6 +50,11 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
       setLoading(false);
     }
   };
+  
+  useEffect(() => {
+    fetchStudentData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const generatePDF = () => {
     if (admitCardRef.current) {
@@ -128,17 +133,6 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    // Convert DD-MM-YYYY to YYYY-MM-DD for date input
-    if (dateString.includes('-')) {
-      const parts = dateString.split('-');
-      if (parts.length === 3) {
-        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-      }
-    }
-    return dateString;
-  };
 
   const getStudentType = () => {
     if (studentData?.autonomousRollNo?.includes('BBA')) return 'BBA';
@@ -163,30 +157,31 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
     return department;
   };
 
-  const getSubjects = () => {
-    if (!studentData) return {};
-    
-    // Extract subjects based on student type
-    const subjects = {};
-    
-    if (studentData.Department === 'BBA') {
-      subjects['Major CP-1'] = studentData['CC-201'] || '';
-      subjects['Major CP-2'] = studentData['CC-202'] || '';
-      subjects['Minor P-1'] = studentData['CC-203'] || '';
-      subjects['MDC-1'] = studentData['Multi Disciplinary-201'] || '';
-      subjects['AEC'] = studentData['AEC-201'] || '';
-      subjects['VAC-1'] = studentData['VAC-201-I.C'] || '';
-    } else if (studentData.Department && studentData.Department !== 'BBA') {
-      subjects['Major CP-1'] = studentData['Major-3'] || '';
-      subjects['Major CP-2'] = studentData['Major-4'] || '';
-      subjects['Minor P-1'] = studentData['MINOR-2'] || '';
-      subjects['MDC-1'] = studentData['Multi Disciplinary-2'] || '';
-      subjects['AEC'] = studentData['AEC-2'] || '';
-      subjects['VAC-1'] = studentData['SEC-I'] || '';
-    }
-    
-    return subjects;
-  };
+  // Unused function - commented out to avoid linter errors
+  // const getSubjects = () => {
+  //   if (!studentData) return {};
+  //   
+  //   // Extract subjects based on student type
+  //   const subjects = {};
+  //   
+  //   if (studentData.Department === 'BBA') {
+  //     subjects['Major CP-1'] = studentData['CC-201'] || '';
+  //     subjects['Major CP-2'] = studentData['CC-202'] || '';
+  //     subjects['Minor P-1'] = studentData['CC-203'] || '';
+  //     subjects['MDC-1'] = studentData['Multi Disciplinary-201'] || '';
+  //     subjects['AEC'] = studentData['AEC-201'] || '';
+  //     subjects['VAC-1'] = studentData['VAC-201-I.C'] || '';
+  //   } else if (studentData.Department && studentData.Department !== 'BBA') {
+  //     subjects['Major CP-1'] = studentData['Major-3'] || '';
+  //     subjects['Major CP-2'] = studentData['Major-4'] || '';
+  //     subjects['Minor P-1'] = studentData['MINOR-2'] || '';
+  //     subjects['MDC-1'] = studentData['Multi Disciplinary-2'] || '';
+  //     subjects['AEC'] = studentData['AEC-2'] || '';
+  //     subjects['VAC-1'] = studentData['SEC-I'] || '';
+  //   }
+  //   
+  //   return subjects;
+  // };
 
   const getMajorSubject = () => {
     // Hide major subject for PG students (no department)
@@ -274,6 +269,7 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
         console.log('VAC-201-I.C value:', studentData['VAC-201-I']?.C);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentData]);
 
   if (loading) {
@@ -304,8 +300,6 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
     );
   }
 
-  const subjects = getSubjects();
-  const studentType = getStudentType();
   const majorSubject = getMajorSubject();
   const stream = getStream();
   const isPG = isPGStudent();
@@ -325,10 +319,10 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
               View Admit Card
             </button>
             <button
-              onClick={onReturnToLogin}
+              onClick={() => navigate('/dashboard')}
               className="return-login-btn"
             >
-              Return to Login
+              Back to Dashboard
             </button>
           </div>
         </div>
@@ -539,9 +533,9 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
             <button
               type="button"
               className="edit-btn"
-              onClick={() => setShowPreview(false)}
+              onClick={() => navigate('/dashboard')}
             >
-              Back to Details
+              Back to Dashboard
             </button>
             <button
               type="button"
@@ -549,13 +543,6 @@ const AdmitCard = ({ user, onReturnToLogin }) => {
               onClick={generatePDF}
             >
               Download as PDF
-            </button>
-            <button
-              type="button"
-              className="return-login-btn"
-              onClick={onReturnToLogin}
-            >
-              Return to Login
             </button>
           </div>
         </div>

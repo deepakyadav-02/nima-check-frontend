@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Login from './components/Login';
+import Dashboard from './components/Dashboard';
 import AdmitCard from './components/AdmitCard';
+import Profile from './components/Profile';
+import Marksheet from './components/Marksheet';
 import './App.css';
 
 function App() {
@@ -43,15 +46,17 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <header className="app-header">
-          <h1>Student Management System</h1>
-          {isAuthenticated && (
-            <div className="user-info">
-              <span>Welcome, {user?.name || user?.autonomousRollNo}</span>
-              <button onClick={handleLogout} className="logout-btn">Logout</button>
+        {isAuthenticated && (
+          <header className="app-header">
+            <div className="header-content">
+              <h1>Nimapara Autonomous College</h1>
+              <div className="user-info">
+                <span className="user-name">Welcome, {user?.name || user?.['Name of the Students'] || user?.autonomousRollNo}</span>
+                <button onClick={handleLogout} className="logout-btn">Logout</button>
+              </div>
             </div>
-          )}
-        </header>
+          </header>
+        )}
 
         <main className="app-main">
           <Routes>
@@ -59,7 +64,7 @@ function App() {
               path="/" 
               element={
                 isAuthenticated ? 
-                <Navigate to="/admit-card" replace /> : 
+                <Navigate to="/dashboard" replace /> : 
                 <Navigate to="/login" replace />
               } 
             />
@@ -67,15 +72,39 @@ function App() {
               path="/login" 
               element={
                 isAuthenticated ? 
-                <Navigate to="/admit-card" replace /> : 
+                <Navigate to="/dashboard" replace /> : 
                 <Login onLogin={handleLogin} />
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                isAuthenticated ? 
+                <Dashboard user={user} /> : 
+                <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                isAuthenticated ? 
+                <Profile user={user} /> : 
+                <Navigate to="/login" replace />
               } 
             />
             <Route 
               path="/admit-card" 
               element={
                 isAuthenticated ? 
-                <AdmitCard user={user} /> : 
+                <AdmitCard user={user} onReturnToLogin={() => window.location.href = '/dashboard'} /> : 
+                <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/marksheet" 
+              element={
+                isAuthenticated ? 
+                <Marksheet user={user} /> : 
                 <Navigate to="/login" replace />
               } 
             />

@@ -1,10 +1,17 @@
 // Backend API Configuration
-export const API_BASE_URL = 'https://nimapara-student-dashboard.vercel.app/api';
+// For local development, use localhost:5001
+// For production, use your deployed backend URL
 
-// API Endpoints
-export const API_ENDPOINTS = {
-  LOGIN: '/auth/login',
-  ADMIT_CARD: '/students/admit-card',
-  PROFILE: '/students/profile',
-  SEARCH: '/students/search'
+const config = {
+  API_URL: 'http://localhost:5001',
+  API_BASE_URL: 'http://localhost:5001/api',
+  API_ENDPOINTS: {
+    LOGIN: '/auth/login',
+    ADMIT_CARD: '/students/admit-card',
+    PROFILE: '/students/profile',
+    SEARCH: '/students/search',
+    MARKSHEET: '/marksheet'
+  }
 };
+
+export default config;
