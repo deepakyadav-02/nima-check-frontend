@@ -19,7 +19,7 @@ export default function Dashboard({ user }) {
   const fetchAbcIdSubmission = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${config.API_BASE_URL}/api/abc-id/my-submission`, {
+      const response = await axios.get(`${config.API_BASE_URL}/abc-id/my-submission`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -50,7 +50,7 @@ export default function Dashboard({ user }) {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${config.API_BASE_URL}/api/abc-id/submit`,
+        `${config.API_BASE_URL}/abc-id/submit`,
         { ABC_ID: abcId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
