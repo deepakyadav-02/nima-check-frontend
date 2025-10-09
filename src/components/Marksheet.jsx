@@ -32,7 +32,7 @@ export default function Marksheet({ user }) {
         setError('Roll number not found');
         return;
       }
-      const url = `${config.API_URL}/api/marksheet/autonomous/${autonomousRollNo}`;
+      const url = `${config.API_BASE_URL}/marksheet/autonomous/${autonomousRollNo}`;
       console.log('🔍 Fetching from URL:', url);
       
       const response = await fetch(url);
