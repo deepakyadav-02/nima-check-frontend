@@ -19,7 +19,7 @@ export default function Dashboard({ user }) {
   const fetchAbcIdSubmission = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${config.API_URL}/api/abc-id/my-submission`, {
+      const response = await axios.get(`${config.API_BASE_URL}/abc-id/my-submission`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -27,7 +27,7 @@ export default function Dashboard({ user }) {
         setSubmittedAbcId(response.data.ABC_ID);
       }
     } catch (error) {
-      console.log('No ABC_ID submission found');
+      console.log('No ABC_ID submission found',error);
     }
   };
 
@@ -50,7 +50,7 @@ export default function Dashboard({ user }) {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${config.API_URL}/api/abc-id/submit`,
+        `${config.API_BASE_URL}/abc-id/submit`,
         { ABC_ID: abcId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -71,7 +71,7 @@ export default function Dashboard({ user }) {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   return (
@@ -85,6 +85,9 @@ export default function Dashboard({ user }) {
             {user?.Course && ` | Course: ${user.Course}`}
           </p>
         </div>
+        <button onClick={handleLogout} className="logout-btn-dashboard">
+          Logout
+        </button>
       </div>
 
       <div className="dashboard-content">
