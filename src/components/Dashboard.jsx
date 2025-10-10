@@ -279,7 +279,7 @@ export default function Dashboard({ user }) {
           )}
         </div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats
         <div className="quick-stats">
           <h3>Quick Information</h3>
           <div className="stats-grid">
@@ -310,7 +310,7 @@ export default function Dashboard({ user }) {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
