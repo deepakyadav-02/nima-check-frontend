@@ -17,6 +17,7 @@
   max-width: 400px;
   width: 100%;
   text-align: center;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -58,10 +59,14 @@
   flex-direction: column;
   gap: 15px;
   margin-top: 15px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-group {
   text-align: left;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-group label {
@@ -79,10 +84,14 @@
   border-radius: 6px;
   outline: none;
   transition: border-color 0.2s;
+  background: #ffffff;
+  color: #000000;
+  box-sizing: border-box;
 }
 
 .form-group input:focus {
   border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 /* Button */
@@ -130,93 +139,43 @@
   line-height: 1.3;
 }
 
-/* Date input field specific styling */
-.form-group input[type="date"] {
+/* Text input field specific styling */
+.form-group input[type="text"] {
   -webkit-appearance: none;
   appearance: none;
   min-height: 42px;
-  position: relative;
-  background: #fff;
-  cursor: pointer;
+  background: #ffffff;
+  color: #000000;
 }
 
-.form-group input[type="date"]:hover {
+.form-group input[type="text"]:hover {
   border-color: #2563eb;
 }
 
-.form-group input[type="date"]:focus {
+.form-group input[type="text"]:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Custom calendar icon for better visual appeal */
-.form-group input[type="date"]::before {
-  content: "📅";
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  font-size: 16px;
-  opacity: 0.6;
-  z-index: 1;
-}
-
-.form-group input[type="date"]:focus::before {
-  opacity: 0.8;
-}
-
-/* Mobile-specific date input improvements */
-.form-group input[type="date"]::-webkit-calendar-picker-indicator {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.form-group input[type="date"]::-webkit-calendar-picker-indicator:hover {
+/* Text input placeholder styling */
+.form-group input[type="text"]::placeholder {
+  color: #9ca3af;
   opacity: 1;
 }
 
-.form-group input[type="date"]::-webkit-datetime-edit {
-  padding: 0;
-  color: #333;
+.form-group input[type="text"]::-webkit-input-placeholder {
+  color: #9ca3af;
+  opacity: 1;
 }
 
-.form-group input[type="date"]::-webkit-datetime-edit-fields-wrapper {
-  padding: 0;
+.form-group input[type="text"]::-moz-placeholder {
+  color: #9ca3af;
+  opacity: 1;
 }
 
-.form-group input[type="date"]::-webkit-datetime-edit-text {
-  padding: 0 2px;
-  color: #666;
-}
-
-.form-group input[type="date"]::-webkit-datetime-edit-month-field,
-.form-group input[type="date"]::-webkit-datetime-edit-day-field,
-.form-group input[type="date"]::-webkit-datetime-edit-year-field {
-  padding: 0 2px;
-  color: #333;
-}
-
-/* Firefox date input styling */
-.form-group input[type="date"]::-moz-calendar-picker-indicator {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-}
-
-/* Edge date input styling */
-.form-group input[type="date"]::-ms-clear,
-.form-group input[type="date"]::-ms-expand {
-  display: none;
+.form-group input[type="text"]:-ms-input-placeholder {
+  color: #9ca3af;
+  opacity: 1;
 }
 
 /* Responsive Design */
@@ -312,26 +271,16 @@
   background: #9ca3af;
 }
 
-/* Responsive improvements for date input */
+/* Responsive improvements for text input */
 @media (max-width: 768px) {
-  .form-group input[type="date"] {
+  .form-group input[type="text"] {
     font-size: 16px; /* Prevents zoom on iOS */
     min-height: 44px; /* Better touch target */
-  }
-  
-  .form-group input[type="date"]::before {
-    font-size: 18px;
-    right: 14px;
   }
 }
 
 @media (max-width: 480px) {
-  .form-group input[type="date"] {
+  .form-group input[type="text"] {
     min-height: 48px; /* Even better touch target on small screens */
-  }
-  
-  .form-group input[type="date"]::before {
-    font-size: 20px;
-    right: 16px;
   }
 }
