@@ -77,32 +77,51 @@ export default function Login({ onLogin }) {
     if (!dateString) return '';
     
     try {
-      // Handle different date formats
-      let date;
-      if (dateString.includes('-')) {
-        // If it's already in YYYY-MM-DD format
-        date = new Date(dateString);
-      } else if (dateString.includes('/')) {
-        // If it's in MM/DD/YYYY format (mobile might send this)
+      console.log('📅 Input date string:', dateString);
+      
+      // Handle YYYY-MM-DD format (from date picker)
+      if (dateString.includes('-') && dateString.length === 10) {
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+          // Direct string parsing to avoid timezone issues
+          const year = parts[0];
+          const month = parts[1];
+          const day = parts[2];
+          const formatted = `${day}-${month}-${year}`;
+          console.log('📅 Formatted date:', formatted);
+          return formatted;
+        }
+      }
+      
+      // Handle MM/DD/YYYY format (some mobile browsers)
+      if (dateString.includes('/')) {
         const parts = dateString.split('/');
-        date = new Date(parts[2], parts[0] - 1, parts[1]);
-      } else {
-        // Fallback to direct Date constructor
-        date = new Date(dateString);
+        if (parts.length === 3) {
+          const month = String(parts[0]).padStart(2, '0');
+          const day = String(parts[1]).padStart(2, '0');
+          const year = parts[2];
+          const formatted = `${day}-${month}-${year}`;
+          console.log('📅 Formatted date:', formatted);
+          return formatted;
+        }
       }
       
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        throw new Error('Invalid date');
+      // Fallback: try Date constructor (less reliable due to timezone)
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        // Use UTC methods to avoid timezone issues
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const year = date.getUTCFullYear();
+        const formatted = `${day}-${month}-${year}`;
+        console.log('📅 Formatted date (UTC):', formatted);
+        return formatted;
       }
       
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
+      throw new Error('Invalid date format');
     } catch (error) {
-      console.error('Date formatting error:', error);
-      return dateString; // Return original if formatting fails
+      console.error('❌ Date formatting error:', error, 'Input:', dateString);
+      return ''; // Return empty string on error
     }
   };
 
