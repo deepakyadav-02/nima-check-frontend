@@ -9,6 +9,37 @@ export default function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const handleDateChange = (e) => {
+    const input = e.target.value;
+    
+    // Remove all non-numeric characters
+    const numbers = input.replace(/\D/g, '');
+    
+    // Format as DD-MM-YYYY
+    let formatted = '';
+    if (numbers.length > 0) {
+      // Add first 2 digits (day)
+      formatted = numbers.substring(0, 2);
+      
+      if (numbers.length >= 3) {
+        // Add dash and next 2 digits (month)
+        formatted += '-' + numbers.substring(2, 4);
+      }
+      
+      if (numbers.length >= 5) {
+        // Add dash and remaining digits (year)
+        formatted += '-' + numbers.substring(4, 8);
+      }
+    }
+    
+    setDateOfBirth(formatted);
+    
+    // Clear error when user starts typing
+    if (error) {
+      setError('');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -18,22 +49,13 @@ export default function Login({ onLogin }) {
     try {
       // Validate date input
       if (!dateOfBirth) {
-        setError('Please select your date of birth');
+        setError('Please enter your date of birth');
         setLoading(false);
         return;
       }
 
-      // Convert the date format before sending to backend
-      const formattedDob = formatDateForBackend(dateOfBirth);
-      
-      if (!formattedDob) {
-        setError('Invalid date format. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      // Validate the formatted date is in dd-mm-yyyy format
-      if (!validateDateFormat(formattedDob)) {
+      // Validate the date format is DD-MM-YYYY
+      if (!validateDateFormat(dateOfBirth)) {
         setError('Date must be in DD-MM-YYYY format (e.g., 15-07-2002)');
         setLoading(false);
         return;
@@ -41,7 +63,7 @@ export default function Login({ onLogin }) {
 
       const payload = {
         autonomousRollNo: rollNumber,
-        dob: formattedDob
+        dob: dateOfBirth
       };
 
       console.log('Sending login payload:', payload);
@@ -69,59 +91,6 @@ export default function Login({ onLogin }) {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Convert YYYY-MM-DD to DD-MM-YYYY format
-  const formatDateForBackend = (dateString) => {
-    if (!dateString) return '';
-    
-    try {
-      console.log('📅 Input date string:', dateString);
-      
-      // Handle YYYY-MM-DD format (from date picker)
-      if (dateString.includes('-') && dateString.length === 10) {
-        const parts = dateString.split('-');
-        if (parts.length === 3) {
-          // Direct string parsing to avoid timezone issues
-          const year = parts[0];
-          const month = parts[1];
-          const day = parts[2];
-          const formatted = `${day}-${month}-${year}`;
-          console.log('📅 Formatted date:', formatted);
-          return formatted;
-        }
-      }
-      
-      // Handle MM/DD/YYYY format (some mobile browsers)
-      if (dateString.includes('/')) {
-        const parts = dateString.split('/');
-        if (parts.length === 3) {
-          const month = String(parts[0]).padStart(2, '0');
-          const day = String(parts[1]).padStart(2, '0');
-          const year = parts[2];
-          const formatted = `${day}-${month}-${year}`;
-          console.log('📅 Formatted date:', formatted);
-          return formatted;
-        }
-      }
-      
-      // Fallback: try Date constructor (less reliable due to timezone)
-      const date = new Date(dateString);
-      if (!isNaN(date.getTime())) {
-        // Use UTC methods to avoid timezone issues
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const year = date.getUTCFullYear();
-        const formatted = `${day}-${month}-${year}`;
-        console.log('📅 Formatted date (UTC):', formatted);
-        return formatted;
-      }
-      
-      throw new Error('Invalid date format');
-    } catch (error) {
-      console.error('❌ Date formatting error:', error, 'Input:', dateString);
-      return ''; // Return empty string on error
     }
   };
 
@@ -184,25 +153,21 @@ export default function Login({ onLogin }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="dateOfBirth">Date of Birth</label>
+            <label htmlFor="dateOfBirth">Date of Birth (DD-MM-YYYY)</label>
             <input
               id="dateOfBirth"
-              type="date"
+              type="text"
               value={dateOfBirth}
-              onChange={(e) => {
-                setDateOfBirth(e.target.value);
-                // Clear error when user starts typing
-                if (error) {
-                  setError('');
-                }
-              }}
+              onChange={handleDateChange}
+              placeholder="01-01-2005"
               required
               disabled={loading}
-              max={new Date().toISOString().split('T')[0]} // Prevent future dates
-              min="1900-01-01" // Reasonable minimum date
+              maxLength="10"
+              inputMode="numeric"
+              autoComplete="off"
             />
             <small style={{ fontSize: '12px', color: '#666', marginTop: '4px', display: 'block' }}>
-              Select your date of birth (DD/MM/YYYY format)
+              Enter date as DDMMYYYY (e.g., type 01012005 for 01-01-2005)
             </small>
           </div>
 
