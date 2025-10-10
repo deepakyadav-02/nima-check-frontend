@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import gradeSheetData from '../data/gradeSheetData.json';
 import { fetchMarksheetsByRollNo } from '../services/marksheetService';
 import './GradeSheet.css';
@@ -10,6 +12,8 @@ export default function GradeSheet({ user }) {
   const [studentInfo, setStudentInfo] = useState(null);
   const [marksheetData, setMarksheetData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const gradeSheetRef = useRef(null);
 
   useEffect(() => {
     fetchStudentData();
@@ -119,6 +123,78 @@ export default function GradeSheet({ user }) {
     }
   };
 
+  const generatePDF = () => {
+    if (gradeSheetRef.current) {
+      setDownloading(true);
+      
+      // Store original styles
+      const originalWidth = gradeSheetRef.current.style.width;
+      const originalMaxWidth = gradeSheetRef.current.style.maxWidth;
+      const originalPadding = gradeSheetRef.current.style.padding;
+      const originalMargin = gradeSheetRef.current.style.margin;
+      
+      // Force compact dimensions for single-page PDF
+      gradeSheetRef.current.style.width = '700px';
+      gradeSheetRef.current.style.maxWidth = '700px';
+      gradeSheetRef.current.style.padding = '15px';
+      gradeSheetRef.current.style.margin = '0';
+
+      // Add compact PDF class
+      gradeSheetRef.current.classList.add('pdf-compact');
+
+      html2canvas(gradeSheetRef.current, { 
+        scale: 2,
+        width: 700,
+        height: undefined,
+        useCORS: true,
+        allowTaint: true
+      }).then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
+        
+        // Calculate dimensions for single page
+        const imgWidth = 190; // A4 width in mm (with margins)
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Check if content fits on one page
+        const maxHeight = 270; // A4 height in mm (with margins)
+        
+        if (imgHeight <= maxHeight) {
+          // Single page - center the content
+          const yOffset = (297 - imgHeight) / 2; // Center vertically
+          pdf.addImage(imgData, "PNG", 10, yOffset, imgWidth, imgHeight);
+        } else {
+          // If still too large, scale down to fit on one page
+          const scaleFactor = maxHeight / imgHeight;
+          const scaledWidth = imgWidth * scaleFactor;
+          const scaledHeight = maxHeight;
+          const xOffset = (210 - scaledWidth) / 2; // Center horizontally
+          const yOffset = (297 - scaledHeight) / 2; // Center vertically
+          
+          pdf.addImage(imgData, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
+        }
+        
+        const filename = `grade_sheet_${data.studentInfo.name || 'student'}_${marksheetData?.publicationDate || 'result'}.pdf`.replace(/\s+/g, '_');
+        pdf.save(filename);
+        
+        // Restore original styles
+        gradeSheetRef.current.style.width = originalWidth;
+        gradeSheetRef.current.style.maxWidth = originalMaxWidth;
+        gradeSheetRef.current.style.padding = originalPadding;
+        gradeSheetRef.current.style.margin = originalMargin;
+        
+        // Remove compact PDF class
+        gradeSheetRef.current.classList.remove('pdf-compact');
+        
+        setDownloading(false);
+      }).catch((error) => {
+        console.error('Error generating PDF:', error);
+        alert('Failed to generate PDF. Please try again.');
+        setDownloading(false);
+      });
+    }
+  };
+
   console.log('🎨 Rendering GradeSheet with data:', data);
   console.log('🎨 Displaying ABC_ID:', data.studentInfo.abcId);
 
@@ -129,9 +205,16 @@ export default function GradeSheet({ user }) {
           ← Back to Dashboard
         </button>
         <h1>Grade Sheet</h1>
+        <button 
+          onClick={generatePDF} 
+          className="download-pdf-btn"
+          disabled={downloading || loading}
+        >
+          {downloading ? 'Generating PDF...' : 'Download PDF'}
+        </button>
       </div>
 
-      <div className="grade-sheet-document">
+      <div className="grade-sheet-document" ref={gradeSheetRef}>
         {/* Document Title */}
         <div className="document-header">
           <h1 className="exam-title">{data.examTitle}</h1>
