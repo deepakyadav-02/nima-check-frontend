@@ -1,0 +1,332 @@
+.grade-sheet-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+}
+
+.grade-sheet-header {
+  margin-bottom: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.grade-sheet-header h1 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin: 10px 0;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 10px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.3s;
+}
+
+.btn-back:hover {
+  color: #2980b9;
+}
+
+/* Main Document Styling */
+.grade-sheet-document {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+  color: #000;
+  line-height: 1.4;
+}
+
+/* Document Header */
+.document-header {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.exam-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+}
+
+.document-type {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0 0 20px 0;
+  text-transform: uppercase;
+}
+
+.serial-number {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Student Information Block */
+.student-info-block {
+  border: 1px solid #000;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 30px;
+}
+
+.info-left-column,
+.info-right-column {
+  flex: 1;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.info-row .label {
+  min-width: 120px;
+  font-weight: bold;
+}
+
+.info-row .colon {
+  margin: 0 5px;
+  font-weight: bold;
+}
+
+.info-row .value {
+  flex: 1;
+  font-weight: bold;
+}
+
+/* Grade Table */
+.grade-table-container {
+  margin-bottom: 20px;
+}
+
+.grade-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #000;
+  font-size: 14px;
+}
+
+.grade-table th,
+.grade-table td {
+  border: 1px solid #000;
+  padding: 8px 6px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.grade-table th {
+  background-color: #f9f9f9;
+  font-weight: bold;
+  text-align: center;
+}
+
+.grade-table td {
+  font-weight: normal;
+}
+
+.grade-table tbody tr td:nth-child(3) {
+  text-align: left;
+  padding-left: 10px;
+}
+
+.total-row {
+  border-top: 2px solid #000;
+}
+
+.total-row td {
+  font-weight: bold;
+}
+
+.total-label {
+  text-align: left !important;
+  padding-left: 10px !important;
+}
+
+/* Result and SGPA Section */
+.result-sgpa-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 15px 0;
+  font-weight: bold;
+}
+
+.result-left {
+  display: flex;
+  align-items: center;
+}
+
+.result-left .label {
+  font-weight: bold;
+}
+
+.result-left .colon {
+  margin: 0 5px;
+  font-weight: bold;
+}
+
+.result-value {
+  font-weight: bold;
+}
+
+.sgpa-right {
+  display: flex;
+  align-items: center;
+}
+
+.sgpa-right .label {
+  font-weight: bold;
+}
+
+.sgpa-right .colon {
+  margin: 0 5px;
+  font-weight: bold;
+}
+
+.sgpa-value {
+  font-weight: bold;
+}
+
+.sgpa-explanation {
+  text-align: center;
+  font-weight: bold;
+  margin: 15px 0;
+  font-size: 14px;
+}
+
+/* Grading System Table */
+.grading-system-container {
+  margin: 20px 0;
+}
+
+.grading-system-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #000;
+  font-size: 14px;
+}
+
+.grading-system-table th,
+.grading-system-table td {
+  border: 1px solid #000;
+  padding: 8px 6px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.grading-system-title {
+  background-color: #f9f9f9;
+  font-weight: bold;
+  text-align: center;
+}
+
+.grading-system-table tbody td {
+  font-weight: normal;
+}
+
+/* Footer */
+.grade-sheet-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  font-weight: bold;
+}
+
+.publication-date {
+  font-weight: bold;
+}
+
+.controller-of-examinations {
+  font-weight: bold;
+}
+
+.disclaimer {
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 20px;
+  text-align: justify;
+}
+
+/* Print Styles */
+@media print {
+  .grade-sheet-container {
+    background: white;
+    padding: 0;
+  }
+  
+  .grade-sheet-header {
+    display: none;
+  }
+  
+  .grade-sheet-document {
+    box-shadow: none;
+    padding: 20px;
+  }
+  
+  .btn-back {
+    display: none;
+  }
+  
+  * {
+    color: #000 !important;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .grade-sheet-container {
+    padding: 10px;
+  }
+  
+  .grade-sheet-document {
+    padding: 20px;
+  }
+  
+  .student-info-block {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .grade-table {
+    font-size: 12px;
+  }
+  
+  .grade-table th,
+  .grade-table td {
+    padding: 6px 4px;
+  }
+  
+  .result-sgpa-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .grade-sheet-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+

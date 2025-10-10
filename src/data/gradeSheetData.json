@@ -1,0 +1,94 @@
+{
+  "examTitle": "UG 1ST SEMESTER REGULAR EXAMINATION - 2024",
+  "documentType": "GRADE SHEET",
+  "serialNumber": "202436258",
+  "studentInfo": {
+    "name": "PRIYANJALI BISWAL",
+    "course": "CORE-I : ZOOLOGY",
+    "coreTwo": "CORE-II : BOTANY",
+    "abcId": "693115555303",
+    "college": "NIGAMANANDA MAHILA MAHAVIDYALAYA, CHARICHHAK, PURI",
+    "examRollNo": "59P0224015",
+    "registrationNo": "P02-6055/2024",
+    "mediumOfExam": "ENGLISH"
+  },
+  "gradeDetails": [
+    {
+      "subjectCode": "CORE-I (MAJOR)",
+      "course": "ZOOL-I",
+      "courseTitle": "INVERTEBRATES: PROTISTA TO ECHINODERMATA",
+      "credit": 4,
+      "grade": "F (End Ser)",
+      "gradePoint": 0,
+      "creditPoint": 0
+    },
+    {
+      "subjectCode": "CORE-I (MAJOR)",
+      "course": "ZOOL-II",
+      "courseTitle": "DIVERSITY OF CHORDATES: PROTOCHORDATES TO MAMM",
+      "credit": 4,
+      "grade": "B+",
+      "gradePoint": 7,
+      "creditPoint": 28
+    },
+    {
+      "subjectCode": "CORE-II (MINOR)",
+      "course": "BOT-I",
+      "courseTitle": "MICROBIOLOGY AND PHYCOLC",
+      "credit": 4,
+      "grade": "F (End Ser)",
+      "gradePoint": 0,
+      "creditPoint": 0
+    },
+    {
+      "subjectCode": "MDC-I",
+      "course": "ECO",
+      "courseTitle": "ECONOMICS",
+      "credit": 3,
+      "grade": "B+",
+      "gradePoint": 7,
+      "creditPoint": 21
+    },
+    {
+      "subjectCode": "AEC-I",
+      "course": "ODI",
+      "courseTitle": "ODIA",
+      "credit": 4,
+      "grade": "A",
+      "gradePoint": 8,
+      "creditPoint": 32
+    },
+    {
+      "subjectCode": "VAC-I",
+      "course": "EVS&DM",
+      "courseTitle": "ENVIRONMENTAL STUDIES AND DISASTER MANAGEMENT",
+      "credit": 3,
+      "grade": "A",
+      "gradePoint": 8,
+      "creditPoint": 24
+    }
+  ],
+  "totals": {
+    "totalCredits": 22,
+    "totalCreditPoints": 105
+  },
+  "result": "FAIL",
+  "sgpa": "4.77",
+  "gradingSystem": [
+    { "grade": "O", "marksRange": "90-100", "gradePoints": "10" },
+    { "grade": "A+", "marksRange": "80-89", "gradePoints": "9" },
+    { "grade": "A", "marksRange": "70-79", "gradePoints": "8" },
+    { "grade": "B+", "marksRange": "60-69", "gradePoints": "7" },
+    { "grade": "B", "marksRange": "50-59", "gradePoints": "6" },
+    { "grade": "C", "marksRange": "45-49", "gradePoints": "5" },
+    { "grade": "D", "marksRange": "40-44", "gradePoints": "4" },
+    { "grade": "F", "marksRange": "Below 40", "gradePoints": "0" },
+    { "grade": "Ab", "marksRange": "00", "gradePoints": "0" },
+    { "grade": "MP", "marksRange": "00", "gradePoints": "0" }
+  ],
+  "publicationDate": "11/07/2025",
+  "controllerOfExaminations": "CONTROLLER OF EXAMINATIONS",
+  "disclaimer": "Disclaimer : The results are Provisional and subject to change after post publication scrutiny by Rama Devi Women's University, Bhubaneswar. Neither Rama Devi Women's University, Bhubaneswar or ivy-Baron Technologies is responsible for any inadvertent error that may have crept into the results being displayed.",
+  "sgpaExplanation": "SGPA - SEMESTER GRADE POINT AVERAGE, CI - CREDIT, DESIGRA = CREDIT"
+}
+

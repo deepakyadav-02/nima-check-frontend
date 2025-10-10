@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import AdmitCard from './components/AdmitCard';
 import Profile from './components/Profile';
 import Marksheet from './components/Marksheet';
+import GradeSheet from './components/GradeSheet';
 import './App.css';
 
 function App() {
@@ -105,6 +106,14 @@ function App() {
               element={
                 isAuthenticated ? 
                 <Marksheet user={user} /> : 
+                <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/grade-sheet" 
+              element={
+                isAuthenticated ? 
+                <GradeSheet user={user} /> : 
                 <Navigate to="/login" replace />
               } 
             />
