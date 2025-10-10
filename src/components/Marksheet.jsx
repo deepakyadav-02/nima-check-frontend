@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import './Marksheet.css';
-import config from '../config';
+import { fetchMarksheetsByRollNo } from '../services/marksheetService';
 
 export default function Marksheet({ user }) {
   const [marksheets, setMarksheets] = useState([]);
@@ -32,59 +32,9 @@ export default function Marksheet({ user }) {
         setError('Roll number not found');
         return;
       }
-      const url = `${config.API_BASE_URL}/marksheet/autonomous/${autonomousRollNo}`;
-      console.log('🔍 Fetching from URL:', url);
       
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      console.log('🔍 Response status:', response.status);
-      console.log('🔍 Response data:', data);
-      console.log('🔍 Is Array?', Array.isArray(data));
-      console.log('🔍 data.marksheets exists?', !!data.marksheets);
-      console.log('🔍 data.student exists?', !!data.student);
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch marksheets');
-      }
-
-      // Handle both response formats: Array directly OR {student, marksheets}
-      let marksheetsArray = [];
-      let studentData = null;
-      
-      if (Array.isArray(data)) {
-        console.log('📌 Response is an array, using it directly');
-        marksheetsArray = data;
-        // Extract student data from first marksheet's populated field
-        if (data.length > 0 && data[0].student) {
-          const populatedStudent = data[0].student;
-          console.log('📌 Populated student object:', populatedStudent);
-          studentData = {
-            name: populatedStudent['Name of the Students'] || populatedStudent.name,
-            autonomousRollNo: populatedStudent['Autonomous Roll No'] || populatedStudent.autonomousRollNo,
-            rollNo: populatedStudent['Roll No'] || populatedStudent.rollNo,
-            department: populatedStudent.Department || populatedStudent.department
-          };
-        }
-      } else if (data.marksheets) {
-        console.log('📌 Response has marksheets property');
-        marksheetsArray = data.marksheets;
-        studentData = data.student;
-        // Also extract from populated field if available
-        if (!studentData && marksheetsArray.length > 0 && marksheetsArray[0].student) {
-          const populatedStudent = marksheetsArray[0].student;
-          studentData = {
-            name: populatedStudent['Name of the Students'] || populatedStudent.name,
-            autonomousRollNo: populatedStudent['Autonomous Roll No'] || populatedStudent.autonomousRollNo,
-            rollNo: populatedStudent['Roll No'] || populatedStudent.rollNo,
-            department: populatedStudent.Department || populatedStudent.department
-          };
-        }
-      }
-      
-      console.log('🔍 Marksheets found:', marksheetsArray.length);
-      console.log('🔍 Student info:', studentData);
-      console.log('🔍 First marksheet:', marksheetsArray[0]);
+      // Use the service to fetch marksheets
+      const { marksheets: marksheetsArray, studentInfo: studentData } = await fetchMarksheetsByRollNo(autonomousRollNo);
       
       setMarksheets(marksheetsArray);
       setStudentInfo(studentData);

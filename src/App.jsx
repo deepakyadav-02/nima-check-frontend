@@ -101,14 +101,14 @@ function App() {
                 <Navigate to="/login" replace />
               } 
             />
-            <Route 
+            {/* <Route 
               path="/marksheet" 
               element={
                 isAuthenticated ? 
                 <Marksheet user={user} /> : 
                 <Navigate to="/login" replace />
               } 
-            />
+            /> */}
             <Route 
               path="/grade-sheet" 
               element={

@@ -115,7 +115,7 @@ export default function Dashboard({ user }) {
           </div>
 
           {/* Results */}
-          <div className="dashboard-card" onClick={() => navigate('/marksheet')}>
+          {/* <div className="dashboard-card" onClick={() => navigate('/marksheet')}>
             <div className="card-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -125,7 +125,7 @@ export default function Dashboard({ user }) {
             <h3>Examination Results</h3>
             <p>Check your examination results and grades</p>
             <div className="card-arrow">→</div>
-          </div>
+          </div> */}
 
           {/* Grade Sheet */}
           <div className="dashboard-card" onClick={() => navigate('/grade-sheet')}>

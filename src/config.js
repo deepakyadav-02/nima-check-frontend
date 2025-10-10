@@ -1,7 +1,7 @@
 
 const config = {
 
-  API_BASE_URL: 'https://nima-check.vercel.app/api',
+  API_BASE_URL: 'http://localhost:5002/api',
 
   API_ENDPOINTS: {
     LOGIN: '/auth/login',
