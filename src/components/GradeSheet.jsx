@@ -34,9 +34,6 @@ export default function GradeSheet({ user }) {
       // Fetch marksheets data using the service
       const { marksheets, studentInfo: apiStudentInfo } = await fetchMarksheetsByRollNo(autonomousRollNo);
       
-      console.log('📥 GradeSheet received apiStudentInfo:', apiStudentInfo);
-      console.log('📥 GradeSheet ABC_ID from API:', apiStudentInfo?.abcId);
-      
       if (apiStudentInfo && marksheets && marksheets.length > 0) {
         setStudentInfo(apiStudentInfo);
         const firstMarksheet = marksheets[0];
@@ -74,29 +71,33 @@ export default function GradeSheet({ user }) {
           }
         }
         
-        // Determine course info (MAJOR CP-1: SUBJECT, CORE-II: SUBJECT)
+        // Determine course info (CORE-1: MAJOR SUBJECT, CORE-2: MINOR SUBJECT)
         let courseInfo = data.studentInfo.course;
         let coreTwoInfo = data.studentInfo.coreTwo;
-        
+
         if (firstMarksheet.courses && firstMarksheet.courses.length > 0) {
-          // First course
-          if (firstMarksheet.courses[0]) {
+          const majorCourse = firstMarksheet.courses.find(course => 
+            course.courseType && course.courseType.toLowerCase().startsWith('major')
+          );
+          const minorCourse = firstMarksheet.courses.find(course => 
+            course.courseType && course.courseType.toLowerCase().startsWith('minor')
+          );
+
+          if (majorCourse?.subjectName) {
+            courseInfo = `CORE-1: ${majorCourse.subjectName.toUpperCase()}`;
+          } else if (firstMarksheet.courses[0]) {
             const firstCourse = firstMarksheet.courses[0];
-            courseInfo = `${firstCourse.courseType.toUpperCase()}: ${firstCourse.subjectName.toUpperCase()}`;
+            courseInfo = `${firstCourse.courseType?.toUpperCase() || ''}: ${firstCourse.subjectName?.toUpperCase() || ''}`.trim();
           }
-          // Second course if exists
-          if (firstMarksheet.courses[1]) {
-            const secondCourse = firstMarksheet.courses[1];
-            coreTwoInfo = `${secondCourse.courseType.toUpperCase()}: ${secondCourse.subjectName.toUpperCase()}`;
+
+          if (minorCourse?.subjectName) {
+            coreTwoInfo = `CORE-2: ${minorCourse.subjectName.toUpperCase()}`;
           } else {
-            coreTwoInfo = ''; // Leave blank if not present
+            coreTwoInfo = '';
           }
         }
         
         // Update the data with API values
-        const abcIdToSet = apiStudentInfo.abcId || '';
-        console.log('📝 Setting ABC_ID in state:', abcIdToSet);
-        
         setData(prevData => {
           const newData = {
             ...prevData,
@@ -105,14 +106,11 @@ export default function GradeSheet({ user }) {
               name: apiStudentInfo.name || prevData.studentInfo.name,
               examRollNo: apiStudentInfo.rollNo || prevData.studentInfo.examRollNo, // BA24-003 (College Roll No in display)
               registrationNo: apiStudentInfo.autonomousRollNo || prevData.studentInfo.registrationNo, // 03NAC24001 (Exam Roll No in display)
-              abcId: abcIdToSet, // Leave blank if not present
               mediumOfExam: language,
               course: courseInfo,
               coreTwo: coreTwoInfo
             }
           };
-          console.log('📝 New data state:', newData);
-          console.log('📝 ABC_ID in new state:', newData.studentInfo.abcId);
           return newData;
         });
       }
@@ -195,9 +193,6 @@ export default function GradeSheet({ user }) {
     }
   };
 
-  console.log('🎨 Rendering GradeSheet with data:', data);
-  console.log('🎨 Displaying ABC_ID:', data.studentInfo.abcId);
-
   return (
     <div className="grade-sheet-container">
       <div className="grade-sheet-header">
@@ -217,8 +212,13 @@ export default function GradeSheet({ user }) {
       <div className="grade-sheet-document" ref={gradeSheetRef}>
         {/* Document Title */}
         <div className="document-header">
-          <h1 className="exam-title">{data.examTitle}</h1>
-          <h2 className="document-type">{data.documentType}</h2>        </div>
+          <img src="/college.png" alt="College Logo" className="college-logo" />
+          <div className="document-header-text">
+            <h1 className="exam-title">{data.examTitle}</h1>
+            <h2 className="document-type">{data.documentType}</h2>
+            <p className="document-subtitle">first-semester(admission-batch2024)</p>
+          </div>
+        </div>
 
         {/* Student Information Block */}
         <div className="student-info-block">
@@ -237,11 +237,6 @@ export default function GradeSheet({ user }) {
               <span className="label"></span>
               <span className="colon"></span>
               <span className="value">{data.studentInfo.coreTwo}</span>
-            </div>
-            <div className="info-row">
-              <span className="label">ABC ID</span>
-              <span className="colon">:</span>
-              <span className="value">{data.studentInfo.abcId}</span>
             </div>
             <div className="info-row">
               <span className="label">College</span>
@@ -287,17 +282,37 @@ export default function GradeSheet({ user }) {
               {marksheetData ? (
                 // Use API data if available
                 <>
-                  {marksheetData.courses.map((course, index) => (
-                    <tr key={index}>
-                      <td>{course.courseType}</td>
-                      <td>{course.subjectName}</td>
-                      <td>{course.subjectName}</td>
-                      <td>{course.credit}</td>
-                      <td>{course.grade}</td>
-                      <td>{course.gradePoint}</td>
-                      <td>{course.creditPoint}</td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    let majorCount = 0;
+                    return marksheetData.courses.map((course, index) => {
+                    const courseType = course.courseType || '';
+                    const normalizedType = courseType.toLowerCase();
+                    let displayCourseType = courseType.toUpperCase();
+
+                    if (normalizedType.startsWith('major')) {
+                        majorCount += 1;
+                        displayCourseType = `CORE-1 MAJOR-${majorCount}`;
+                    } else if (normalizedType.startsWith('minor')) {
+                        displayCourseType = 'CORE-2 Minor-1';
+                    } else if (normalizedType.includes('aec')) {
+                        displayCourseType = 'AEC-1';
+                    } else if (normalizedType.includes('vac')) {
+                        displayCourseType = 'VAC-1';
+                    }
+
+                    return (
+                      <tr key={index}>
+                        <td>{displayCourseType}</td>
+                        <td>{course.subjectName}</td>
+                        <td>{course.subjectName}</td>
+                        <td>{course.credit}</td>
+                        <td>{course.grade}</td>
+                        <td>{course.gradePoint}</td>
+                        <td>{course.creditPoint}</td>
+                      </tr>
+                    );
+                  });
+                  })()}
                   <tr className="total-row">
                     <td colSpan="3" className="total-label">TOTAL</td>
                     <td>{marksheetData.totalCredits}</td>
@@ -347,10 +362,6 @@ export default function GradeSheet({ user }) {
           </div>
         </div>
 
-        <div className="sgpa-explanation">
-          {data.sgpaExplanation}
-        </div>
-
         {/* Grading System Table */}
         <div className="grading-system-container">
           <table className="grading-system-table">
@@ -378,11 +389,13 @@ export default function GradeSheet({ user }) {
 
         {/* Footer */}
         <div className="grade-sheet-footer">
-          <div className="publication-date">
-            Date of Publication {marksheetData ? marksheetData.publicationDate : data.publicationDate}
+          <div className="controller-signature">
+            <img src="/EXAMINER.jpg" alt="Controller of Examinations Signature" className="signature-image" />
+            <div className="signature-label">CONTROLLER OF EXAMINATIONS</div>
           </div>
-          <div className="controller-of-examinations">
-            {data.controllerOfExaminations}
+          <div className="principal-signature">
+            <img src="/PRINCIPAL.jpg" alt="Principal Signature" className="signature-image" />
+            <div className="signature-label">Principal Signature</div>
           </div>
         </div>
 
