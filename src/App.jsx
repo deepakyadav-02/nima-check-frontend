@@ -109,14 +109,14 @@ function App() {
                 <Navigate to="/login" replace />
               } 
             /> */}
-            <Route 
+            {/* <Route 
               path="/grade-sheet" 
               element={
                 isAuthenticated ? 
                 <GradeSheet user={user} /> : 
                 <Navigate to="/login" replace />
               } 
-            />
+            /> */}
           </Routes>
         </main>
       </div>
