@@ -205,6 +205,81 @@
   padding-left: 10px;
 }
 
+/* PG Marksheet Table Styles */
+.pg-marksheet-table {
+  font-size: 12px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.pg-marksheet-table thead th {
+  background-color: #f9f9f9;
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+  padding: 8px 4px;
+}
+
+.pg-marksheet-table thead tr:first-child th {
+  border-bottom: 1px solid #000;
+}
+
+.pg-marksheet-table .subject-name-cell {
+  text-align: left;
+  padding-left: 10px;
+  font-weight: bold;
+}
+
+/* Column width adjustments */
+.pg-marksheet-table th:first-child,
+.pg-marksheet-table td:first-child {
+  width: 18%;
+}
+
+/* Marks columns (MID SEM, END SEM, TOTAL - columns 2-7) */
+.pg-marksheet-table th:nth-child(2),
+.pg-marksheet-table th:nth-child(3),
+.pg-marksheet-table th:nth-child(4),
+.pg-marksheet-table th:nth-child(5),
+.pg-marksheet-table th:nth-child(6),
+.pg-marksheet-table th:nth-child(7),
+.pg-marksheet-table td:nth-child(2),
+.pg-marksheet-table td:nth-child(3),
+.pg-marksheet-table td:nth-child(4),
+.pg-marksheet-table td:nth-child(5),
+.pg-marksheet-table td:nth-child(6),
+.pg-marksheet-table td:nth-child(7) {
+  width: 9%;
+}
+
+/* Other columns (CREDIT, GRADE, GP, CP) */
+.pg-marksheet-table th:nth-child(8),
+.pg-marksheet-table th:nth-child(9),
+.pg-marksheet-table th:nth-child(10),
+.pg-marksheet-table th:nth-child(11),
+.pg-marksheet-table td:nth-child(8),
+.pg-marksheet-table td:nth-child(9),
+.pg-marksheet-table td:nth-child(10),
+.pg-marksheet-table td:nth-child(11) {
+  width: 5.5%;
+}
+
+.pg-marksheet-table tbody td {
+  text-align: center;
+  font-weight: normal;
+  padding: 6px 4px;
+}
+
+.pg-marksheet-table .total-row td {
+  font-weight: bold;
+  border-top: 2px solid #000;
+}
+
+.pg-marksheet-table .total-label {
+  text-align: left !important;
+  padding-left: 10px !important;
+}
+
 .total-row {
   border-top: 2px solid #000;
 }
@@ -224,6 +299,34 @@
   justify-content: space-between;
   align-items: center;
   margin: 15px 0;
+  font-weight: bold;
+}
+
+/* PG Results Section */
+.pg-results-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+  width: 100%;
+}
+
+.pg-result-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pg-result-item .label {
+  font-weight: bold;
+}
+
+.pg-result-item .colon {
+  margin: 0 5px;
+  font-weight: bold;
+}
+
+.pg-result-item .value {
   font-weight: bold;
 }
 
@@ -261,6 +364,33 @@
 
 .sgpa-value {
   font-weight: bold;
+}
+
+.pg-results-right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.pg-results-right > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pg-results-right .label {
+  font-weight: bold;
+}
+
+.pg-results-right .colon {
+  margin: 0 5px;
+  font-weight: bold;
+}
+
+.pg-results-right .value {
+  font-weight: bold;
+  color: #2c3e50;
 }
 
 /* Grading System Table */
@@ -422,6 +552,58 @@
 .pdf-compact .grade-table td {
   padding: 5px 4px;
   font-size: 10px;
+}
+
+.pdf-compact .pg-marksheet-table {
+  font-size: 9px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.pdf-compact .pg-marksheet-table th:first-child,
+.pdf-compact .pg-marksheet-table td:first-child {
+  width: 18%;
+}
+
+.pdf-compact .pg-marksheet-table th:nth-child(2),
+.pdf-compact .pg-marksheet-table th:nth-child(3),
+.pdf-compact .pg-marksheet-table th:nth-child(4),
+.pdf-compact .pg-marksheet-table th:nth-child(5),
+.pdf-compact .pg-marksheet-table th:nth-child(6),
+.pdf-compact .pg-marksheet-table th:nth-child(7),
+.pdf-compact .pg-marksheet-table td:nth-child(2),
+.pdf-compact .pg-marksheet-table td:nth-child(3),
+.pdf-compact .pg-marksheet-table td:nth-child(4),
+.pdf-compact .pg-marksheet-table td:nth-child(5),
+.pdf-compact .pg-marksheet-table td:nth-child(6),
+.pdf-compact .pg-marksheet-table td:nth-child(7) {
+  width: 9%;
+}
+
+.pdf-compact .pg-marksheet-table th:nth-child(8),
+.pdf-compact .pg-marksheet-table th:nth-child(9),
+.pdf-compact .pg-marksheet-table th:nth-child(10),
+.pdf-compact .pg-marksheet-table th:nth-child(11),
+.pdf-compact .pg-marksheet-table td:nth-child(8),
+.pdf-compact .pg-marksheet-table td:nth-child(9),
+.pdf-compact .pg-marksheet-table td:nth-child(10),
+.pdf-compact .pg-marksheet-table td:nth-child(11) {
+  width: 5.5%;
+}
+
+.pdf-compact .pg-marksheet-table thead th {
+  padding: 4px 3px;
+  font-size: 9px;
+}
+
+.pdf-compact .pg-marksheet-table tbody td {
+  padding: 4px 3px;
+  font-size: 9px;
+}
+
+.pdf-compact .pg-results-section {
+  gap: 15px;
+  font-size: 11px;
 }
 
 .pdf-compact .result-sgpa-section {
