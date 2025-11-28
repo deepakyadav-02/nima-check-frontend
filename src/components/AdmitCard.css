@@ -186,15 +186,20 @@
   display: flex;
   gap: 30px;
   margin-bottom: 20px;
+  align-items: flex-start; /* Align items to top */
 }
 
 .details-left {
   flex: 1;
+  min-width: 0; /* Prevent flex item from overflowing */
+  position: relative; /* For stable positioning */
 }
 
 .details-right {
   flex-shrink: 0;
   width: 120px;
+  align-self: flex-start; /* Align photo container to top */
+  position: relative; /* For stable positioning */
 }
 
 .detail-row {
@@ -203,10 +208,12 @@
   margin-bottom: 15px;
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
+  position: relative; /* For absolute positioning of core-subject */
 }
 
 .detail-row .label {
   width: 200px;
+  flex-shrink: 0; /* Prevent label from shrinking */
   font-weight: bold;
   font-size: 14px;
   color: #000;
@@ -214,6 +221,7 @@
 
 .detail-row .colon {
   width: 20px;
+  flex-shrink: 0; /* Prevent colon from shrinking */
   text-align: center;
   font-weight: bold;
   color: #000;
@@ -221,15 +229,24 @@
 
 .detail-row .value {
   flex: 1;
+  min-width: 0; /* Allow value to shrink if needed */
   font-size: 14px;
   color: #000;
+  position: relative; /* For positioning core-subject */
+  padding-right: 200px; /* Reserve space for DEPARTMENT text */
 }
 
 .core-subject {
-  margin-left: auto;
+  position: absolute;
+  right: 0;
+  top: 0;
   font-weight: bold;
   font-size: 14px;
   color: #000;
+  white-space: nowrap; /* Prevent text wrapping */
+  background: white; /* Ensure it's visible */
+  padding-left: 10px; /* Space from value text */
+  line-height: 1.5; /* Match detail-row line height */
 }
 
 .course-section {
@@ -273,6 +290,8 @@
   background: #fff;
   margin-top: 10px;
   position: relative;
+  flex-shrink: 0; /* Prevent photo container from shrinking */
+  align-self: flex-start; /* Align to top, don't stretch */
 }
 
 .photo-upload {
@@ -285,9 +304,10 @@
 }
 
 .photo-placeholder {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: #f8f9fa;
@@ -295,6 +315,39 @@
   color: #000;
   font-weight: bold;
   font-size: 10px;
+}
+
+.photo-placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+}
+
+.photo-placeholder-content span {
+  font-size: 12px;
+  font-weight: bold;
+  color: #000;
+}
+
+.photo-upload-hint {
+  font-size: 8px;
+  color: #666;
+  text-align: center;
+  margin-top: 5px;
+  line-height: 1.2;
+}
+
+.photo-upload-hint a {
+  color: #007bff;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.photo-upload-hint a:hover {
+  color: #0056b3;
 }
 
 .upload-photo-btn {
@@ -323,6 +376,33 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.photo-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px;
+  text-align: center;
+}
+
+.photo-update-hint {
+  font-size: 8px;
+  color: white;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.photo-update-hint a {
+  color: #4da6ff;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.photo-update-hint a:hover {
+  color: #66b3ff;
 }
 
 .photo-actions {
@@ -685,25 +765,43 @@
 .pdf-compact .student-details {
   gap: 20px;
   margin-bottom: 15px;
+  align-items: flex-start; /* Ensure alignment in PDF */
 }
 
 .pdf-compact .detail-row {
   margin-bottom: 10px;
   padding-bottom: 8px;
+  position: relative; /* Maintain positioning */
 }
 
 .pdf-compact .detail-row .label {
   width: 180px;
+  flex-shrink: 0; /* Prevent shrinking in PDF */
   font-size: 12px;
 }
 
 .pdf-compact .detail-row .value {
   font-size: 12px;
+  position: relative; /* Maintain positioning for core-subject */
+  padding-right: 180px; /* Reserve space for DEPARTMENT in PDF */
+}
+
+.pdf-compact .core-subject {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 12px;
+  white-space: nowrap;
+  background: white;
+  padding-left: 10px;
+  line-height: 1.5; /* Match detail-row line height */
 }
 
 .pdf-compact .photo-container {
   width: 100px;
   height: 120px;
+  flex-shrink: 0; /* Prevent shrinking in PDF */
+  align-self: flex-start; /* Align to top */
 }
 
 .pdf-compact .subjects-table th,

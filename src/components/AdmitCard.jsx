@@ -12,10 +12,8 @@ const AdmitCard = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(true);
-  const [uploadedPhoto, setUploadedPhoto] = useState(null);
-  const [_photoFile, setPhotoFile] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
   const admitCardRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   const fetchStudentData = async () => {
     setLoading(true);
@@ -36,6 +34,10 @@ const AdmitCard = ({ user }) => {
       // Backend returns student data directly, not wrapped in success/student fields
       if (response.data && response.data.autonomousRollNo) {
         setStudentData(response.data);
+        // Set profile image if available from database
+        if (response.data.profileImage) {
+          setProfileImage(response.data.profileImage);
+        }
       } else {
         setError('Failed to fetch student data');
       }
@@ -56,15 +58,15 @@ const AdmitCard = ({ user }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     if (admitCardRef.current) {
-      // Temporarily hide photo action buttons
-      const photoActions = admitCardRef.current.querySelectorAll('.photo-actions');
+      // Temporarily hide photo info/hints (not needed in PDF)
+      const photoInfo = admitCardRef.current.querySelectorAll('.photo-info, .photo-upload-hint');
       const originalDisplayValues = [];
       
-      photoActions.forEach((action, index) => {
-        originalDisplayValues[index] = action.style.display;
-        action.style.display = 'none';
+      photoInfo.forEach((info, index) => {
+        originalDisplayValues[index] = info.style.display;
+        info.style.display = 'none';
       });
 
       // Set compact dimensions for single-page PDF generation
@@ -81,6 +83,12 @@ const AdmitCard = ({ user }) => {
 
       // Add compact PDF class
       admitCardRef.current.classList.add('pdf-compact');
+      
+      // Force layout recalculation to ensure proper positioning
+      admitCardRef.current.offsetHeight; // Trigger reflow
+      
+      // Wait a bit for layout to stabilize
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       html2canvas(admitCardRef.current, { 
         scale: 2,
@@ -125,9 +133,9 @@ const AdmitCard = ({ user }) => {
         // Remove compact PDF class
         admitCardRef.current.classList.remove('pdf-compact');
         
-        // Restore photo action buttons
-        photoActions.forEach((action, index) => {
-          action.style.display = originalDisplayValues[index] || '';
+        // Restore photo info/hints
+        photoInfo.forEach((info, index) => {
+          info.style.display = originalDisplayValues[index] || '';
         });
       });
     }
@@ -195,33 +203,12 @@ const AdmitCard = ({ user }) => {
     return studentData?.autonomousRollNo?.includes('111NAC');
   };
 
-  const handlePhotoUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.type.startsWith('image/')) {
-        setPhotoFile(file);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setUploadedPhoto(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        alert('Please select an image file');
-      }
+  // Refresh image from database when component mounts or when navigating back
+  useEffect(() => {
+    if (studentData && studentData.profileImage) {
+      setProfileImage(studentData.profileImage);
     }
-  };
-
-  const triggerPhotoUpload = () => {
-    fileInputRef.current?.click();
-  };
-
-  const removePhoto = () => {
-    setUploadedPhoto(null);
-    setPhotoFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+  }, [studentData]);
 
   // Debug logging
   useEffect(() => {
@@ -378,47 +365,25 @@ const AdmitCard = ({ user }) => {
 
                 <div className="details-right">
                   <div className="photo-container">
-                    {uploadedPhoto ? (
+                    {profileImage ? (
                       <div className="photo-display">
-                        <img src={uploadedPhoto} alt="Student Photo" className="student-photo" />
-                        <div className="photo-actions">
-                          <button 
-                            type="button" 
-                            className="change-photo-btn"
-                            onClick={triggerPhotoUpload}
-                          >
-                            Change Photo
-                          </button>
-                          <button 
-                            type="button" 
-                            className="remove-photo-btn"
-                            onClick={removePhoto}
-                          >
-                            Remove
-                          </button>
+                        <img src={profileImage} alt="Student Photo" className="student-photo" />
+                        <div className="photo-info">
+                          <p className="photo-update-hint">
+                            To update your photo, go to your <a href="/profile" onClick={(e) => { e.preventDefault(); navigate('/profile'); }}>Profile</a>
+                          </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="photo-upload">
-                        <div className="photo-placeholder">
+                      <div className="photo-placeholder">
+                        <div className="photo-placeholder-content">
                           <span>PHOTO</span>
+                          <p className="photo-upload-hint">
+                            Upload your photo in your <a href="/profile" onClick={(e) => { e.preventDefault(); navigate('/profile'); }}>Profile</a>
+                          </p>
                         </div>
-                        <button 
-                          type="button" 
-                          className="upload-photo-btn"
-                          onClick={triggerPhotoUpload}
-                        >
-                          Upload Photo
-                        </button>
                       </div>
                     )}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      style={{ display: 'none' }}
-                    />
                   </div>
                 </div>
               </div>
