@@ -473,8 +473,8 @@ const AdmitCard = ({ user }) => {
               </div>
               <div className="header-text">
                 <h2>NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h2>
-                <h3>ADMIT CARD (BATCH -2024)</h3>
-                <h3>EXAMINATION-2025</h3>
+                <h3>ADMIT CARD (BATCH -{studentData.batch || '2024'})</h3>
+                <h3>EXAMINATION-{studentData.batch === '2025' ? '2026' : '2025'}</h3>
               </div>
             </div>
 
@@ -540,64 +540,122 @@ const AdmitCard = ({ user }) => {
               </div>
 
               {isPG ? (
-                <div className="course-section">
-                  <div className="course-row">
-                    <span className="label">COURSE</span>
-                    <span className="colon">:</span>
-                    <span className="value">{studentData.Course || ''}</span>
+                // PG Students - Check if batch 2025 (first year) to show PAPER fields
+                studentData.batch === '2025' ? (
+                  <div className="subjects-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>PAPER-1.1</th>
+                          <th>PAPER-1.2</th>
+                          <th>PAPER-1.3</th>
+                          <th>PAPER-1.4</th>
+                          <th>PAPER-1.5</th>
+                          <th>PAPER-1.6</th>
+                          <th>PAPER-1.7</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>{studentData['PAPER-1.1'] || ''}</td>
+                          <td>{studentData['PAPER-1.2'] || ''}</td>
+                          <td>{studentData['PAPER-1.3'] || ''}</td>
+                          <td>{studentData['PAPER-1.4'] || ''}</td>
+                          <td>{studentData['PAPER-1.5'] || ''}</td>
+                          <td>{studentData['PAPER-1.6'] || ''}</td>
+                          <td>{studentData['PAPER-1.7'] || ''}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
-                </div>
+                ) : (
+                  <div className="course-section">
+                    <div className="course-row">
+                      <span className="label">COURSE</span>
+                      <span className="colon">:</span>
+                      <span className="value">{studentData.Course || ''}</span>
+                    </div>
+                  </div>
+                )
               ) : (
-                <div className="subjects-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
-                          <>
-                            <th>CC-301</th>
-                            <th>CC-302</th>
-                            <th>CC-303</th>
-                            <th>MDE-301</th>
-                            <th>SEC-301</th>
-                            <th>VAC-301</th>
-                          </>
-                        ) : (
-                          <>
-                            <th>Major-CP-5</th>
-                            <th>Major-CP-6</th>
-                            <th>Major-CP-7</th>
-                            <th>MINOR-3</th>
-                            <th>Multi Disciplinary-3</th>
-                            <th>VAC-2</th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
-                          <>
-                            <td>{studentData['CC-301'] || ''}</td>
-                            <td>{studentData['CC-302'] || ''}</td>
-                            <td>{studentData['CC-303'] || ''}</td>
-                            <td>{studentData['MDE-301'] || ''}</td>
-                            <td>{studentData['SEC-301'] || ''}</td>
-                            <td>{studentData['VAC-301'] || ''}</td>
-                          </>
-                        ) : (
-                          <>
-                            <td>{studentData['Major-CP-5'] || ''}</td>
-                            <td>{studentData['Major-CP-6'] || ''}</td>
-                            <td>{studentData['Major-CP-7'] || ''}</td>
-                            <td>{studentData['MINOR-3'] || ''}</td>
-                            <td>{studentData['Multi Disciplinary-3'] || ''}</td>
-                            <td>{studentData['VAC-2'] || ''}</td>
-                          </>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                // UG Students - Check if batch 2025 (first year) to show first semester subjects
+                studentData.batch === '2025' ? (
+                  <div className="subjects-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>CC-101</th>
+                          <th>CC-102</th>
+                          <th>CC-103</th>
+                          <th>MDE-101</th>
+                          <th>AEC-101</th>
+                          <th>VAC-101</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>{studentData['CC-101'] || ''}</td>
+                          <td>{studentData['CC-102'] || ''}</td>
+                          <td>{studentData['CC-103'] || ''}</td>
+                          <td>{studentData['MDE-101'] || ''}</td>
+                          <td>{studentData['AEC-101'] || ''}</td>
+                          <td>{studentData['VAC-101'] || ''}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="subjects-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
+                            <>
+                              <th>CC-301</th>
+                              <th>CC-302</th>
+                              <th>CC-303</th>
+                              <th>MDE-301</th>
+                              <th>SEC-301</th>
+                              <th>VAC-301</th>
+                            </>
+                          ) : (
+                            <>
+                              <th>Major-CP-5</th>
+                              <th>Major-CP-6</th>
+                              <th>Major-CP-7</th>
+                              <th>MINOR-3</th>
+                              <th>Multi Disciplinary-3</th>
+                              <th>VAC-2</th>
+                            </>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
+                            <>
+                              <td>{studentData['CC-301'] || ''}</td>
+                              <td>{studentData['CC-302'] || ''}</td>
+                              <td>{studentData['CC-303'] || ''}</td>
+                              <td>{studentData['MDE-301'] || ''}</td>
+                              <td>{studentData['SEC-301'] || ''}</td>
+                              <td>{studentData['VAC-301'] || ''}</td>
+                            </>
+                          ) : (
+                            <>
+                              <td>{studentData['Major-CP-5'] || ''}</td>
+                              <td>{studentData['Major-CP-6'] || ''}</td>
+                              <td>{studentData['Major-CP-7'] || ''}</td>
+                              <td>{studentData['MINOR-3'] || ''}</td>
+                              <td>{studentData['Multi Disciplinary-3'] || ''}</td>
+                              <td>{studentData['VAC-2'] || ''}</td>
+                            </>
+                          )}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )
               )}
             </div>
 
