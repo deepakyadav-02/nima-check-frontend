@@ -497,7 +497,8 @@ const AdmitCard = ({ user }) => {
             <div className="details-and-subjects">
               <div className="student-details">
                 <div className="details-left">
-                  {!isPG && (
+                  {/* Show Stream for batch 2025 students (both UG and PG) or for older UG students */}
+                  {(studentData.batch === '2025' || !isPG) && stream && (
                     <div className="detail-row">
                       <span className="label">STREAM</span>
                       <span className="colon">:</span>
