@@ -14,6 +14,15 @@ const AdmitCard = ({ user }) => {
   const [showPreview, setShowPreview] = useState(true);
   const [profileImage, setProfileImage] = useState(null);
   const admitCardRef = useRef(null);
+  
+  // ABC ID and Photo Upload states
+  const [abcId, setAbcId] = useState('');
+  const [showAbcForm, setShowAbcForm] = useState(false);
+  const [isSubmittingAbc, setIsSubmittingAbc] = useState(false);
+  const [abcMessage, setAbcMessage] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoMessage, setPhotoMessage] = useState('');
+  const fileInputRef = useRef(null);
 
   const fetchStudentData = async () => {
     setLoading(true);
@@ -203,12 +212,27 @@ const AdmitCard = ({ user }) => {
     return studentData?.autonomousRollNo?.includes('111NAC');
   };
 
-  // Refresh image from database when component mounts or when navigating back
+  // Load profile image from localStorage and refresh ABC_ID from database
   useEffect(() => {
-    if (studentData && studentData.profileImage) {
+    // Load profile image from localStorage first
+    const storageKey = `profileImage_${user?.autonomousRollNo}`;
+    const savedImage = localStorage.getItem(storageKey);
+    if (savedImage) {
+      setProfileImage(savedImage);
+    } else if (studentData?.profileImage) {
+      // Fallback to database image if localStorage doesn't have it
       setProfileImage(studentData.profileImage);
     }
-  }, [studentData]);
+
+    // Log ABC_ID for debugging
+    if (studentData) {
+      console.log('ABC_ID check:', {
+        ABC_ID: studentData.ABC_ID,
+        hasABC_ID: !!(studentData.ABC_ID && studentData.ABC_ID !== null && studentData.ABC_ID !== ''),
+        profileImage: !!profileImage || !!savedImage
+      });
+    }
+  }, [studentData, user?.autonomousRollNo]);
 
   // Debug logging
   useEffect(() => {
@@ -290,6 +314,133 @@ const AdmitCard = ({ user }) => {
   const majorSubject = getMajorSubject();
   const stream = getStream();
   const isPG = isPGStudent();
+
+  // Check if download is allowed
+  const canDownload = () => {
+    const hasProfileImage = !!profileImage;
+    const hasAbcId = !!(studentData?.ABC_ID && studentData.ABC_ID !== null && studentData.ABC_ID !== '');
+    return hasProfileImage && hasAbcId;
+  };
+
+  const getDownloadRestrictionMessage = () => {
+    const messages = [];
+    if (!profileImage) {
+      messages.push('Please upload your profile photo');
+    }
+    if (!studentData?.ABC_ID || studentData.ABC_ID === null || studentData.ABC_ID === '') {
+      messages.push('Please register your ABC ID');
+    }
+    return messages.length > 0 ? messages.join(' and ') : '';
+  };
+
+  const handleDownloadClick = () => {
+    if (!canDownload()) {
+      const message = getDownloadRestrictionMessage();
+      alert(`Cannot download admit card. ${message}. Please complete these requirements first.`);
+      return;
+    }
+    generatePDF();
+  };
+
+  // Handle ABC ID submission
+  const handleAbcIdSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!abcId.trim()) {
+      setAbcMessage('Please enter ABC_ID');
+      return;
+    }
+
+    if (abcId.length < 5) {
+      setAbcMessage('ABC_ID must be at least 5 characters');
+      return;
+    }
+
+    setIsSubmittingAbc(true);
+    setAbcMessage('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${config.API_BASE_URL}/abc-id/submit`,
+        { ABC_ID: abcId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setAbcMessage('ABC ID submitted successfully!');
+      setShowAbcForm(false);
+      setAbcId('');
+      
+      // Refresh student data to get updated ABC_ID
+      await fetchStudentData();
+      
+      setTimeout(() => setAbcMessage(''), 3000);
+    } catch (error) {
+      setAbcMessage(error.response?.data?.message || 'Failed to submit ABC_ID');
+    } finally {
+      setIsSubmittingAbc(false);
+    }
+  };
+
+  // Handle profile photo upload - Frontend only (localStorage)
+  const triggerPhotoUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setPhotoMessage('Please select a valid image file');
+      return;
+    }
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setPhotoMessage('Image size should be less than 2MB');
+      return;
+    }
+
+    try {
+      setUploadingPhoto(true);
+      setPhotoMessage('');
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Image = e.target.result;
+
+        try {
+          // Store in localStorage with student's roll number as key
+          const storageKey = `profileImage_${user.autonomousRollNo}`;
+          localStorage.setItem(storageKey, base64Image);
+          
+          // Update state
+          setProfileImage(base64Image);
+          setPhotoMessage('Profile photo saved successfully!');
+          
+          setTimeout(() => setPhotoMessage(''), 3000);
+        } catch (err) {
+          console.error('Error saving image:', err);
+          setPhotoMessage('Failed to save image. Please try again.');
+        } finally {
+          setUploadingPhoto(false);
+        }
+      };
+
+      reader.onerror = () => {
+        setPhotoMessage('Failed to read image file');
+        setUploadingPhoto(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Error processing image:', err);
+      setPhotoMessage('Failed to process image');
+      setUploadingPhoto(false);
+    }
+  };
 
   return (
     <div className="admit-card-container">
@@ -403,22 +554,21 @@ const AdmitCard = ({ user }) => {
                       <tr>
                         {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
                           <>
-                            <th>CC-201</th>
-                            <th>CC-202</th>
-                            <th>CC-203</th>
-                            <th>Multi Disciplinary-201</th>
-                            <th>AEC-201</th>
-                            <th>SEC-201</th>
-                            <th>VAC-201-I.C</th>
+                            <th>CC-301</th>
+                            <th>CC-302</th>
+                            <th>CC-303</th>
+                            <th>MDE-301</th>
+                            <th>SEC-301</th>
+                            <th>VAC-301</th>
                           </>
                         ) : (
                           <>
-                            <th>Major-3</th>
-                            <th>Major-4</th>
-                            <th>MINOR-2</th>
-                            <th>Multi Disciplinary-2</th>
-                            <th>AEC-2</th>
-                            <th>SEC-I</th>
+                            <th>Major-CP-5</th>
+                            <th>Major-CP-6</th>
+                            <th>Major-CP-7</th>
+                            <th>MINOR-3</th>
+                            <th>Multi Disciplinary-3</th>
+                            <th>VAC-2</th>
                           </>
                         )}
                       </tr>
@@ -427,22 +577,21 @@ const AdmitCard = ({ user }) => {
                       <tr>
                         {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
                           <>
-                            <td>{studentData['CC-201'] || ''}</td>
-                            <td>{studentData['CC-202'] || ''}</td>
-                            <td>{studentData['CC-203'] || ''}</td>
-                            <td>{studentData['Multi Disciplinary-201'] || ''}</td>
-                            <td>{studentData['AEC-201'] || ''}</td>
-                            <td>{studentData['SEC-201'] || ''}</td>
-                            <td>{studentData['VAC-201-I']?.C || ''}</td>
+                            <td>{studentData['CC-301'] || ''}</td>
+                            <td>{studentData['CC-302'] || ''}</td>
+                            <td>{studentData['CC-303'] || ''}</td>
+                            <td>{studentData['MDE-301'] || ''}</td>
+                            <td>{studentData['SEC-301'] || ''}</td>
+                            <td>{studentData['VAC-301'] || ''}</td>
                           </>
                         ) : (
                           <>
-                            <td>{studentData['Major-3'] || ''}</td>
-                            <td>{studentData['Major-4'] || ''}</td>
-                            <td>{studentData['MINOR-2'] || ''}</td>
-                            <td>{studentData['Multi Disciplinary-2'] || ''}</td>
-                            <td>{studentData['AEC-2'] || ''}</td>
-                            <td>{studentData['SEC-I'] || ''}</td>
+                            <td>{studentData['Major-CP-5'] || ''}</td>
+                            <td>{studentData['Major-CP-6'] || ''}</td>
+                            <td>{studentData['Major-CP-7'] || ''}</td>
+                            <td>{studentData['MINOR-3'] || ''}</td>
+                            <td>{studentData['Multi Disciplinary-3'] || ''}</td>
+                            <td>{studentData['VAC-2'] || ''}</td>
                           </>
                         )}
                       </tr>
@@ -494,6 +643,102 @@ const AdmitCard = ({ user }) => {
             </div>
           </div>
 
+          {/* Requirements Section - Show when requirements are missing */}
+          {!canDownload() && (
+            <div className="requirements-section">
+              <h3>Complete Requirements to Download Admit Card</h3>
+              
+              {/* Profile Photo Upload */}
+              {!profileImage && (
+                <div className="requirement-item">
+                  <div className="requirement-header">
+                    <h4>Upload Profile Photo</h4>
+                  </div>
+                  <div className="requirement-content">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <button
+                      type="button"
+                      className="requirement-btn"
+                      onClick={triggerPhotoUpload}
+                      disabled={uploadingPhoto}
+                    >
+                      {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                    </button>
+                    {photoMessage && (
+                      <div className={`requirement-message ${photoMessage.includes('success') ? 'success' : 'error'}`}>
+                        {photoMessage}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ABC ID Submission */}
+              {(!studentData?.ABC_ID || studentData.ABC_ID === null || studentData.ABC_ID === '') && (
+                <div className="requirement-item">
+                  <div className="requirement-header">
+                    <h4>Register ABC ID</h4>
+                  </div>
+                  <div className="requirement-content">
+                    {!showAbcForm ? (
+                      <button
+                        type="button"
+                        className="requirement-btn"
+                        onClick={() => setShowAbcForm(true)}
+                      >
+                        Add ABC ID
+                      </button>
+                    ) : (
+                      <form onSubmit={handleAbcIdSubmit} className="abc-id-form">
+                        <input
+                          type="text"
+                          value={abcId}
+                          onChange={(e) => setAbcId(e.target.value)}
+                          placeholder="Enter your ABC ID (min 5 characters)"
+                          required
+                          minLength={5}
+                          className="abc-id-input"
+                        />
+                        <div className="abc-form-actions">
+                          <button
+                            type="button"
+                            className="requirement-btn secondary"
+                            onClick={() => {
+                              setShowAbcForm(false);
+                              setAbcId('');
+                              setAbcMessage('');
+                            }}
+                            disabled={isSubmittingAbc}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="requirement-btn primary"
+                            disabled={isSubmittingAbc}
+                          >
+                            {isSubmittingAbc ? 'Submitting...' : 'Submit'}
+                          </button>
+                        </div>
+                        {abcMessage && (
+                          <div className={`requirement-message ${abcMessage.includes('success') ? 'success' : 'error'}`}>
+                            {abcMessage}
+                          </div>
+                        )}
+                      </form>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="preview-actions">
             <button
               type="button"
@@ -502,13 +747,25 @@ const AdmitCard = ({ user }) => {
             >
               Back to Dashboard
             </button>
-            <button
-              type="button"
-              className="download-btn"
-              onClick={generatePDF}
-            >
-              Download as PDF
-            </button>
+            <div className="download-section">
+              {!canDownload() && (
+                <div className="download-restriction-message">
+                  <p>⚠️ {getDownloadRestrictionMessage()}</p>
+                  <p className="restriction-hint">
+                    Complete the requirements above to download your admit card
+                  </p>
+                </div>
+              )}
+              <button
+                type="button"
+                className={`download-btn ${!canDownload() ? 'disabled' : ''}`}
+                onClick={handleDownloadClick}
+                disabled={!canDownload()}
+                title={!canDownload() ? getDownloadRestrictionMessage() : 'Download admit card as PDF'}
+              >
+                Download as PDF
+              </button>
+            </div>
           </div>
         </div>
       )}
