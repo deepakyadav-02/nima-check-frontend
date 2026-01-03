@@ -159,6 +159,12 @@ const AdmitCard = ({ user }) => {
   };
 
   const getStream = () => {
+    // For batch 2025 students (both UG and PG), use Stream field directly
+    if (studentData?.batch === '2025' && studentData?.Stream) {
+      return studentData.Stream;
+    }
+    
+    // For older students, derive from Department
     if (!studentData?.Department) return '';
     
     const department = studentData.Department.trim();
@@ -209,7 +215,17 @@ const AdmitCard = ({ user }) => {
   };
 
   const isPGStudent = () => {
-    return studentData?.autonomousRollNo?.includes('111NAC');
+    // Check if it's a PG student by roll number pattern or studentType
+    if (studentData?.studentType === 'PG2025' || studentData?.studentType === 'PG') {
+      return true;
+    }
+    // Check roll number patterns for PG students
+    return studentData?.autonomousRollNo?.includes('111NAC') || 
+           studentData?.autonomousRollNo?.includes('153NAC') ||
+           studentData?.autonomousRollNo?.includes('155NAC') ||
+           studentData?.autonomousRollNo?.includes('156NAC') ||
+           studentData?.autonomousRollNo?.includes('181NAC') ||
+           studentData?.autonomousRollNo?.includes('NACMFC');
   };
 
   // Load profile image from localStorage and refresh ABC_ID from database
@@ -546,24 +562,51 @@ const AdmitCard = ({ user }) => {
                     <table>
                       <thead>
                         <tr>
-                          <th>PAPER-1.1</th>
-                          <th>PAPER-1.2</th>
-                          <th>PAPER-1.3</th>
-                          <th>PAPER-1.4</th>
-                          <th>PAPER-1.5</th>
-                          <th>PAPER-1.6</th>
-                          <th>PAPER-1.7</th>
+                          {/* Dynamically show headers based on available fields */}
+                          {studentData['PAPER-MTC-101'] ? (
+                            <>
+                              <th>PAPER-MTC-101</th>
+                              <th>PAPER-MTC-102</th>
+                              <th>PAPER-MTC-103</th>
+                              <th>PAPER-MTC-104</th>
+                              <th>PAPER-MTC-105</th>
+                            </>
+                          ) : (
+                            <>
+                              {studentData['PAPER-1.1'] && <th>PAPER-1.1</th>}
+                              {studentData['PAPER-1.2'] && <th>PAPER-1.2</th>}
+                              {studentData['PAPER-1.3'] && <th>PAPER-1.3</th>}
+                              {studentData['PAPER-1.4'] && <th>PAPER-1.4</th>}
+                              {studentData['PAPER-1.5'] && <th>PAPER-1.5</th>}
+                              {studentData['PAPER-1.6'] && <th>PAPER-1.6</th>}
+                              {studentData['PAPER-1.7'] && <th>PAPER-1.7</th>}
+                              {studentData['PAPER-1.8'] && <th>PAPER-1.8</th>}
+                            </>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
-                          <td>{studentData['PAPER-1.1'] || ''}</td>
-                          <td>{studentData['PAPER-1.2'] || ''}</td>
-                          <td>{studentData['PAPER-1.3'] || ''}</td>
-                          <td>{studentData['PAPER-1.4'] || ''}</td>
-                          <td>{studentData['PAPER-1.5'] || ''}</td>
-                          <td>{studentData['PAPER-1.6'] || ''}</td>
-                          <td>{studentData['PAPER-1.7'] || ''}</td>
+                          {studentData['PAPER-MTC-101'] ? (
+                            <>
+                              <td>{studentData['PAPER-MTC-101'] || ''}</td>
+                              <td>{studentData['PAPER-MTC-102'] || ''}</td>
+                              <td>{studentData['PAPER-MTC-103'] || ''}</td>
+                              <td>{studentData['PAPER-MTC-104'] || ''}</td>
+                              <td>{studentData['PAPER-MTC-105'] || ''}</td>
+                            </>
+                          ) : (
+                            <>
+                              {studentData['PAPER-1.1'] !== undefined && <td>{studentData['PAPER-1.1'] || ''}</td>}
+                              {studentData['PAPER-1.2'] !== undefined && <td>{studentData['PAPER-1.2'] || ''}</td>}
+                              {studentData['PAPER-1.3'] !== undefined && <td>{studentData['PAPER-1.3'] || ''}</td>}
+                              {studentData['PAPER-1.4'] !== undefined && <td>{studentData['PAPER-1.4'] || ''}</td>}
+                              {studentData['PAPER-1.5'] !== undefined && <td>{studentData['PAPER-1.5'] || ''}</td>}
+                              {studentData['PAPER-1.6'] !== undefined && <td>{studentData['PAPER-1.6'] || ''}</td>}
+                              {studentData['PAPER-1.7'] !== undefined && <td>{studentData['PAPER-1.7'] || ''}</td>}
+                              {studentData['PAPER-1.8'] !== undefined && <td>{studentData['PAPER-1.8'] || ''}</td>}
+                            </>
+                          )}
                         </tr>
                       </tbody>
                     </table>
@@ -580,30 +623,60 @@ const AdmitCard = ({ user }) => {
               ) : (
                 // UG Students - Check if batch 2025 (first year) to show first semester subjects
                 studentData.batch === '2025' ? (
-                  <div className="subjects-table">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>CC-101</th>
-                          <th>CC-102</th>
-                          <th>CC-103</th>
-                          <th>MDE-101</th>
-                          <th>AEC-101</th>
-                          <th>VAC-101</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>{studentData['CC-101'] || ''}</td>
-                          <td>{studentData['CC-102'] || ''}</td>
-                          <td>{studentData['CC-103'] || ''}</td>
-                          <td>{studentData['MDE-101'] || ''}</td>
-                          <td>{studentData['AEC-101'] || ''}</td>
-                          <td>{studentData['VAC-101'] || ''}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                  // Check if BBA student (Stream === "BBA") to show BBA subjects, otherwise show regular UG subjects
+                  studentData.Stream === 'BBA' ? (
+                    <div className="subjects-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>CC-101</th>
+                            <th>CC-102</th>
+                            <th>CC-103</th>
+                            <th>MDE-101</th>
+                            <th>AEC-101</th>
+                            <th>AEC-102</th>
+                            <th>VAC-101</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>{studentData['CC-101'] || ''}</td>
+                            <td>{studentData['CC-102'] || ''}</td>
+                            <td>{studentData['CC-103'] || ''}</td>
+                            <td>{studentData['MDE-101'] || ''}</td>
+                            <td>{studentData['AEC-101'] || ''}</td>
+                            <td>{studentData['AEC-102'] || ''}</td>
+                            <td>{studentData['VAC-101'] || ''}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="subjects-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Core-1-Major-1</th>
+                            <th>Core-1-Major-2</th>
+                            <th>Core-2-Minor-1</th>
+                            <th>Multidisciplinary-1</th>
+                            <th>AEC-I</th>
+                            <th>VAC-I</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>{studentData['Core-1-Major-1'] || ''}</td>
+                            <td>{studentData['Core-1-Major-2'] || ''}</td>
+                            <td>{studentData['Core-2-Minor-1'] || ''}</td>
+                            <td>{studentData['Multidisciplinary-1'] || ''}</td>
+                            <td>{studentData['AEC-I'] || ''}</td>
+                            <td>{studentData['VAC-I'] || ''}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )
                 ) : (
                   <div className="subjects-table">
                     <table>
