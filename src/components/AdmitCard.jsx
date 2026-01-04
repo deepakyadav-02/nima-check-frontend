@@ -490,7 +490,7 @@ const AdmitCard = ({ user }) => {
               <div className="header-text">
                 <h2>NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h2>
                 <h3>ADMIT CARD (BATCH -{studentData.batch || '2024'})</h3>
-                <h3>EXAMINATION-{studentData.batch === '2025' ? '2026' : '2025'}</h3>
+                <h3>EXAMINATION-2026</h3>
               </div>
             </div>
 
