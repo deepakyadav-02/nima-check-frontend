@@ -523,6 +523,11 @@ const AdmitCard = ({ user }) => {
                     )}
                   </div>
                   <div className="detail-row">
+                    <span className="label">ABC ID</span>
+                    <span className="colon">:</span>
+                    <span className="value">{studentData.ABC_ID}</span>
+                  </div>
+                  <div className="detail-row">
                     <span className="label">NAME OF THE STUDENT</span>
                     <span className="colon">:</span>
                     <span className="value">
