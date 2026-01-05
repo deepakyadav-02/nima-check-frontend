@@ -139,7 +139,7 @@ export default function Login({ onLogin }) {
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="rollNumber">College Roll Number</label>
+            <label htmlFor="rollNumber">College/Autonomous Roll Number</label>
             <input
               id="rollNumber"
               type="text"
