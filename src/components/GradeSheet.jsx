@@ -3,26 +3,77 @@ import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import gradeSheetData from '../data/gradeSheetData.json';
-import { fetchMarksheetsByRollNo } from '../services/marksheetService';
+import { fetchMarksheetsByRollNo, fetchUGSecondSem2024ByRollNo } from '../services/marksheetService';
 import './GradeSheet.css';
 
 export default function GradeSheet({ user }) {
   const navigate = useNavigate();
   const [data, setData] = useState(gradeSheetData);
-  const [studentInfo, setStudentInfo] = useState(null);
   const [marksheetData, setMarksheetData] = useState(null);
+  const [selectedSem, setSelectedSem] = useState('1');
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const gradeSheetRef = useRef(null);
 
   useEffect(() => {
     fetchStudentData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, selectedSem]);
+
+  const toNum = (v) => {
+    if (v === null || v === undefined) return null;
+    const n = Number(String(v).trim());
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const buildSecondSemMarksheetData = (secondSemRow) => {
+    const subjects = [
+      { key: 'Major-3', courseType: 'Major-3', subjectCode: 'MAJOR-3' },
+      { key: 'Major-4', courseType: 'Major-4', subjectCode: 'MAJOR-4' },
+      { key: 'MINOR-2(20)', courseType: 'Minor-2', subjectCode: 'MINOR-2' },
+      { key: 'Multi Disciplinary-2', courseType: 'MDC-2', subjectCode: 'MDC-2' },
+      { key: 'AEC-2', courseType: 'AEC-2', subjectCode: 'AEC-2' },
+      { key: 'SEC-I', courseType: 'SEC-I', subjectCode: 'SEC-I' },
+    ];
+
+    const courses = subjects
+      .map(({ key, courseType, subjectCode }) => {
+        const s = secondSemRow?.[key];
+        if (!s) return null;
+
+        const gradePoint = toNum(s['Grade Point']);
+        const creditPoint = toNum(s.CreditPoint);
+        const derivedCredit = gradePoint && creditPoint ? creditPoint / gradePoint : null;
+
+        return {
+          subjectCode,
+          courseType,
+          subjectName: s.Subject || '',
+          credit: derivedCredit ? Number(derivedCredit.toFixed(0)) : '',
+          grade: s.Grade || '',
+          gradePoint: gradePoint ?? '',
+          creditPoint: creditPoint ?? '',
+        };
+      })
+      .filter(Boolean);
+
+    return {
+      courses,
+      totalCredits: toNum(secondSemRow?.TotalCredit) ?? '',
+      totalCreditPoints: toNum(secondSemRow?.TotalCreditPoint) ?? '',
+      sgpa: toNum(secondSemRow?.SGPA) ?? '',
+      publicationDate: data.publicationDate,
+      classification: secondSemRow?.Classification || 'N/A',
+    };
+  };
 
   const fetchStudentData = async () => {
     try {
       setLoading(true);
+      setErrorMessage('');
+      // Prevent showing previous semester's data if the new fetch fails
+      setMarksheetData(null);
       const autonomousRollNo = user?.autonomousRollNo || user?.['Autonomous Roll No'];
       
       if (!autonomousRollNo) {
@@ -31,18 +82,52 @@ export default function GradeSheet({ user }) {
         return;
       }
 
-      // Fetch marksheets data using the service
+      if (selectedSem === '2') {
+        const secondSemRow = await fetchUGSecondSem2024ByRollNo(autonomousRollNo);
+
+        if (secondSemRow) {
+          const apiStudentInfo = {
+            name: secondSemRow['Name of the Students'],
+            autonomousRollNo: secondSemRow['Autonomous Roll No'],
+            rollNo: secondSemRow['Roll No'],
+            department: secondSemRow.Department,
+          };
+
+          setMarksheetData(buildSecondSemMarksheetData(secondSemRow));
+
+          const majorSubject = secondSemRow?.['Major-3']?.Subject || secondSemRow?.['Major-4']?.Subject || '';
+          const minorSubject = secondSemRow?.['MINOR-2(20)']?.Subject || '';
+          const aecSubject = secondSemRow?.['AEC-2']?.Subject || '';
+          const detectedLanguage =
+            String(aecSubject).toLowerCase().includes('odia') ? 'ODIA' : (aecSubject ? String(aecSubject).toUpperCase() : 'ENGLISH');
+
+          setData(prevData => ({
+            ...prevData,
+            studentInfo: {
+              ...prevData.studentInfo,
+              name: apiStudentInfo.name || prevData.studentInfo.name,
+              examRollNo: apiStudentInfo.rollNo || prevData.studentInfo.examRollNo,
+              registrationNo: apiStudentInfo.autonomousRollNo || prevData.studentInfo.registrationNo,
+              mediumOfExam: detectedLanguage || prevData.studentInfo.mediumOfExam,
+              course: majorSubject ? `CORE-1: ${String(majorSubject).toUpperCase()}` : prevData.studentInfo.course,
+              coreTwo: minorSubject ? `CORE-2: ${String(minorSubject).toUpperCase()}` : prevData.studentInfo.coreTwo,
+            }
+          }));
+        }
+        return;
+      }
+
+      // Semester 1 (existing flow): Fetch marksheets data using the service
       const { marksheets, studentInfo: apiStudentInfo } = await fetchMarksheetsByRollNo(autonomousRollNo);
-      
+
       if (apiStudentInfo && marksheets && marksheets.length > 0) {
-        setStudentInfo(apiStudentInfo);
-        const firstMarksheet = marksheets[0];
+        const sem1Marksheet = marksheets.find(m => String(m.semester) === '1') || marksheets[0];
         
         // Store the marksheet data (courses, totals, sgpa)
         // Format createdAt date to DD/MM/YYYY
         let publicationDate = data.publicationDate; // fallback to default
-        if (firstMarksheet.createdAt) {
-          const date = new Date(firstMarksheet.createdAt);
+        if (sem1Marksheet.createdAt) {
+          const date = new Date(sem1Marksheet.createdAt);
           const day = String(date.getDate()).padStart(2, '0');
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
@@ -50,19 +135,19 @@ export default function GradeSheet({ user }) {
         }
         
         setMarksheetData({
-          courses: firstMarksheet.courses || [],
-          totalCredits: firstMarksheet.totalCredits || 0,
-          totalCreditPoints: firstMarksheet.totalCreditPoints || 0,
-          sgpa: firstMarksheet.sgpa || 0,
+          courses: sem1Marksheet.courses || [],
+          totalCredits: sem1Marksheet.totalCredits || 0,
+          totalCreditPoints: sem1Marksheet.totalCreditPoints || 0,
+          sgpa: sem1Marksheet.sgpa || 0,
           publicationDate: publicationDate,
-          classification: firstMarksheet.classification || 'N/A'
+          classification: sem1Marksheet.classification || 'N/A'
         });
         
         // Determine language based on first two courses
         let language = 'ENGLISH';
-        if (firstMarksheet.courses && firstMarksheet.courses.length > 0) {
+        if (sem1Marksheet.courses && sem1Marksheet.courses.length > 0) {
           // Check first two courses for ODIA
-          const firstTwoCourses = firstMarksheet.courses.slice(0, 2);
+          const firstTwoCourses = sem1Marksheet.courses.slice(0, 2);
           const hasOdiaCourse = firstTwoCourses.some(course => 
             course.subjectName && course.subjectName.toLowerCase().includes('odia')
           );
@@ -75,18 +160,18 @@ export default function GradeSheet({ user }) {
         let courseInfo = data.studentInfo.course;
         let coreTwoInfo = data.studentInfo.coreTwo;
 
-        if (firstMarksheet.courses && firstMarksheet.courses.length > 0) {
-          const majorCourse = firstMarksheet.courses.find(course => 
+        if (sem1Marksheet.courses && sem1Marksheet.courses.length > 0) {
+          const majorCourse = sem1Marksheet.courses.find(course => 
             course.courseType && course.courseType.toLowerCase().startsWith('major')
           );
-          const minorCourse = firstMarksheet.courses.find(course => 
+          const minorCourse = sem1Marksheet.courses.find(course => 
             course.courseType && course.courseType.toLowerCase().startsWith('minor')
           );
 
           if (majorCourse?.subjectName) {
             courseInfo = `CORE-1: ${majorCourse.subjectName.toUpperCase()}`;
-          } else if (firstMarksheet.courses[0]) {
-            const firstCourse = firstMarksheet.courses[0];
+          } else if (sem1Marksheet.courses[0]) {
+            const firstCourse = sem1Marksheet.courses[0];
             courseInfo = `${firstCourse.courseType?.toUpperCase() || ''}: ${firstCourse.subjectName?.toUpperCase() || ''}`.trim();
           }
 
@@ -116,6 +201,7 @@ export default function GradeSheet({ user }) {
       }
     } catch (err) {
       console.error('Error fetching student data:', err);
+      setErrorMessage(err?.message || 'Failed to load gradesheet data');
     } finally {
       setLoading(false);
     }
@@ -200,6 +286,15 @@ export default function GradeSheet({ user }) {
           ← Back to Dashboard
         </button>
         <h1>Grade Sheet</h1>
+        <select
+          value={selectedSem}
+          onChange={(e) => setSelectedSem(e.target.value)}
+          disabled={loading || downloading}
+          style={{ marginLeft: '12px', padding: '8px' }}
+        >
+          <option value="1">1st Sem</option>
+          <option value="2">2nd Sem</option>
+        </select>
         <button 
           onClick={generatePDF} 
           className="download-pdf-btn"
@@ -209,6 +304,12 @@ export default function GradeSheet({ user }) {
         </button>
       </div>
 
+      {errorMessage ? (
+        <div style={{ margin: '12px 0', padding: '10px 12px', border: '1px solid #f5c2c7', background: '#f8d7da', color: '#842029', borderRadius: '6px' }}>
+          {errorMessage}
+        </div>
+      ) : null}
+
       <div className="grade-sheet-document" ref={gradeSheetRef}>
         {/* Document Title */}
         <div className="document-header">
@@ -216,7 +317,9 @@ export default function GradeSheet({ user }) {
           <div className="document-header-text">
             <h1 className="exam-title">{data.examTitle}</h1>
             <h2 className="document-type">{data.documentType}</h2>
-            <p className="document-subtitle">first-semester(admission-batch2024)</p>
+            <p className="document-subtitle">
+              {selectedSem === '2' ? 'second-semester(admission-batch2024)' : 'first-semester(admission-batch2024)'}
+            </p>
           </div>
         </div>
 
@@ -302,7 +405,7 @@ export default function GradeSheet({ user }) {
 
                     return (
                       <tr key={index}>
-                        <td>{displayCourseType}</td>
+                        <td>{course.subjectCode || displayCourseType}</td>
                         <td>{course.subjectName}</td>
                         <td>{course.subjectName}</td>
                         <td>{course.credit}</td>

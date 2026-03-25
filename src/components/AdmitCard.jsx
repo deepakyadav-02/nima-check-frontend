@@ -377,7 +377,7 @@ const AdmitCard = ({ user }) => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
+      await axios.post(
         `${config.API_BASE_URL}/abc-id/submit`,
         { ABC_ID: abcId },
         { headers: { Authorization: `Bearer ${token}` } }

@@ -97,3 +97,21 @@ export const fetchMarksheetsByRollNo = async (autonomousRollNo) => {
   };
 };
 
+export const fetchUGSecondSem2024ByRollNo = async (autonomousRollNo) => {
+  if (!autonomousRollNo) {
+    throw new Error('Autonomous roll number is required');
+  }
+
+  const url = `${config.API_BASE_URL}/ug-2ndsem2024/autonomous/${autonomousRollNo}`;
+  console.log('🔍 Fetching 2nd sem from URL:', url);
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to fetch 2nd semester record');
+  }
+
+  return data;
+};
+
