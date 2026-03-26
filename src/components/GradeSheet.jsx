@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import gradeSheetData from '../data/gradeSheetData.json';
-import { fetchMarksheetsByRollNo, fetchUGSecondSem2024ByRollNo } from '../services/marksheetService';
+import { fetchMarksheetsByRollNo } from '../services/marksheetService';
 import './GradeSheet.css';
 
 export default function GradeSheet({ user }) {
@@ -89,7 +89,7 @@ export default function GradeSheet({ user }) {
       }
 
       if (selectedSem === '2') {
-        const secondSemRow = await fetchUGSecondSem2024ByRollNo(autonomousRollNo);
+        const { secondSem2024: secondSemRow } = await fetchMarksheetsByRollNo(autonomousRollNo);
 
         if (secondSemRow) {
           const apiStudentInfo = {
@@ -475,9 +475,9 @@ export default function GradeSheet({ user }) {
           <table className="grade-table">
             <thead>
               <tr>
-                <th>SUBJECT CODE</th>
+                <th>{selectedSem === '2' ? 'SUBJECT' : 'SUBJECT CODE'}</th>
                 <th>COURSE</th>
-                <th>COURSE TITLE</th>
+                {selectedSem === '2' ? null : <th>COURSE TITLE</th>}
                 <th>CREDIT</th>
                 <th>GRADE</th>
                 <th>GRADE POINT</th>
@@ -508,9 +508,9 @@ export default function GradeSheet({ user }) {
 
                     return (
                       <tr key={index}>
-                        <td>{course.subjectCode || displayCourseType}</td>
-                        <td>{course.subjectName}</td>
-                        <td>{course.subjectName}</td>
+                        <td>{selectedSem === '2' ? course.subjectName : (course.subjectCode || '')}</td>
+                        <td>{selectedSem === '2' ? displayCourseType : course.subjectName}</td>
+                        {selectedSem === '2' ? null : <td>{course.subjectName}</td>}
                         <td>{course.credit}</td>
                         <td>{course.grade}</td>
                         <td>{course.gradePoint}</td>
@@ -520,7 +520,7 @@ export default function GradeSheet({ user }) {
                   });
                   })()}
                   <tr className="total-row">
-                    <td colSpan="3" className="total-label">TOTAL</td>
+                    <td colSpan={selectedSem === '2' ? 2 : 3} className="total-label">TOTAL</td>
                     <td>{marksheetData.totalCredits}</td>
                     <td></td>
                     <td></td>
@@ -534,7 +534,7 @@ export default function GradeSheet({ user }) {
                     <tr key={index}>
                       <td>{subject.subjectCode}</td>
                       <td>{subject.course}</td>
-                      <td>{subject.courseTitle}</td>
+                      {selectedSem === '2' ? null : <td>{subject.courseTitle}</td>}
                       <td>{subject.credit}</td>
                       <td>{subject.grade}</td>
                       <td>{subject.gradePoint}</td>
@@ -542,7 +542,7 @@ export default function GradeSheet({ user }) {
                     </tr>
                   ))}
                   <tr className="total-row">
-                    <td colSpan="3" className="total-label">TOTAL</td>
+                    <td colSpan={selectedSem === '2' ? 2 : 3} className="total-label">TOTAL</td>
                     <td>{data.totals.totalCredits}</td>
                     <td></td>
                     <td></td>

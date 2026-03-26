@@ -30,6 +30,7 @@ export const fetchMarksheetsByRollNo = async (autonomousRollNo) => {
   // Handle both response formats: Array directly OR {student, marksheets}
   let marksheetsArray = [];
   let studentData = null;
+  const secondSem2024 = Array.isArray(data) ? null : (data?.secondSem2024 || null);
   
   if (Array.isArray(data)) {
     console.log('📌 Response is an array, using it directly');
@@ -93,25 +94,8 @@ export const fetchMarksheetsByRollNo = async (autonomousRollNo) => {
   
   return {
     marksheets: marksheetsArray,
-    studentInfo: studentData
+    studentInfo: studentData,
+    secondSem2024
   };
-};
-
-export const fetchUGSecondSem2024ByRollNo = async (autonomousRollNo) => {
-  if (!autonomousRollNo) {
-    throw new Error('Autonomous roll number is required');
-  }
-
-  const url = `${config.API_BASE_URL}/ug-2ndsem2024/autonomous/${autonomousRollNo}`;
-  console.log('🔍 Fetching 2nd sem from URL:', url);
-
-  const response = await fetch(url);
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Failed to fetch 2nd semester record');
-  }
-
-  return data;
 };
 
