@@ -50,13 +50,16 @@ export default function GradeSheet({ user }) {
 
         const gradePoint = toNum(s['Grade Point']);
         const creditPoint = toNum(s.CreditPoint);
-        const derivedCredit = gradePoint && creditPoint ? creditPoint / gradePoint : null;
+        const derivedCredit = (gradePoint !== null && gradePoint !== 0 && creditPoint !== null)
+          ? creditPoint / gradePoint
+          : null;
 
         return {
           subjectCode,
           courseType,
           subjectName: s.Subject || '',
-          credit: derivedCredit ? Number(derivedCredit.toFixed(0)) : '',
+          // Keep 0 visible (don't coerce to empty string)
+          credit: derivedCredit === null ? '' : Number(derivedCredit.toFixed(0)),
           grade: s.Grade || '',
           gradePoint: gradePoint ?? '',
           creditPoint: creditPoint ?? '',
@@ -64,10 +67,13 @@ export default function GradeSheet({ user }) {
       })
       .filter(Boolean);
 
+    const totalGradePoints = courses.reduce((sum, c) => sum + (typeof c.gradePoint === 'number' ? c.gradePoint : 0), 0);
+
     return {
       courses,
       totalCredits: toNum(secondSemRow?.TotalCredit) ?? '',
       totalCreditPoints: toNum(secondSemRow?.TotalCreditPoint) ?? '',
+      totalGradePoints: Number(totalGradePoints.toFixed(2)),
       sgpa: toNum(secondSemRow?.SGPA) ?? '',
       publicationDate: data.publicationDate,
       classification: secondSemRow?.Classification || 'N/A',
@@ -523,7 +529,7 @@ export default function GradeSheet({ user }) {
                     <td colSpan={selectedSem === '2' ? 2 : 3} className="total-label">TOTAL</td>
                     <td>{marksheetData.totalCredits}</td>
                     <td></td>
-                    <td></td>
+                    <td>{selectedSem === '2' ? marksheetData.totalGradePoints : ''}</td>
                     <td>{marksheetData.totalCreditPoints}</td>
                   </tr>
                 </>
@@ -545,7 +551,7 @@ export default function GradeSheet({ user }) {
                     <td colSpan={selectedSem === '2' ? 2 : 3} className="total-label">TOTAL</td>
                     <td>{data.totals.totalCredits}</td>
                     <td></td>
-                    <td></td>
+                    <td>{selectedSem === '2' ? '' : ''}</td>
                     <td>{data.totals.totalCreditPoints}</td>
                   </tr>
                 </>
