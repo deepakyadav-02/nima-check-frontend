@@ -50,9 +50,12 @@ export default function GradeSheet({ user }) {
 
         const gradePoint = toNum(s['Grade Point']);
         const creditPoint = toNum(s.CreditPoint);
-        const derivedCredit = (gradePoint !== null && gradePoint !== 0 && creditPoint !== null)
-          ? creditPoint / gradePoint
-          : null;
+        const derivedCredit =
+          gradePoint === 0 && creditPoint === 0
+            ? 0
+            : (gradePoint !== null && gradePoint !== 0 && creditPoint !== null)
+              ? creditPoint / gradePoint
+              : null;
 
         return {
           subjectCode,
