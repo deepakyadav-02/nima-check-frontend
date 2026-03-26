@@ -10,16 +10,22 @@ export default function GradeSheet({ user }) {
   const navigate = useNavigate();
   const [data, setData] = useState(gradeSheetData);
   const [marksheetData, setMarksheetData] = useState(null);
+  const [selectedYear, setSelectedYear] = useState('');
   const [selectedSem, setSelectedSem] = useState('1');
+  const [showGradeSheet, setShowGradeSheet] = useState(false);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const gradeSheetRef = useRef(null);
 
   useEffect(() => {
+    if (!showGradeSheet || !selectedYear || !selectedSem) {
+      setLoading(false);
+      return;
+    }
     fetchStudentData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, selectedSem]);
+  }, [user, selectedSem, selectedYear, showGradeSheet]);
 
   const toNum = (v) => {
     if (v === null || v === undefined) return null;
@@ -279,6 +285,89 @@ export default function GradeSheet({ user }) {
     }
   };
 
+  if (!showGradeSheet) {
+    return (
+      <div className="grade-sheet-container">
+        <div className="grade-sheet-header">
+          <button onClick={() => navigate('/dashboard')} className="btn-back">
+            ← Back to Dashboard
+          </button>
+          <h1>Grade Sheet</h1>
+        </div>
+
+        <div
+          style={{
+            marginTop: '20px',
+            padding: '18px',
+            background: '#fff',
+            borderRadius: '10px',
+            border: '1px solid #e5e7eb',
+            maxWidth: '720px',
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: '18px' }}>Select Year</h2>
+          <p style={{ marginTop: '8px', marginBottom: '14px', color: '#4b5563' }}>
+            Choose the admission batch/year to view your gradesheet.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <button
+              className="download-pdf-btn"
+              onClick={() => setSelectedYear('2024')}
+              style={{ width: 'auto' }}
+            >
+              Admission Batch 2024
+            </button>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            <h2 style={{ margin: 0, fontSize: '18px' }}>Select Semester</h2>
+            <p style={{ marginTop: '8px', marginBottom: '14px', color: '#4b5563' }}>
+              Choose which semester gradesheet you want to view.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                className="download-pdf-btn"
+                onClick={() => setSelectedSem('1')}
+                style={{
+                  width: 'auto',
+                  background: selectedSem === '1' ? undefined : '#f3f4f6',
+                  color: selectedSem === '1' ? undefined : '#111827',
+                }}
+              >
+                1st Sem
+              </button>
+              <button
+                className="download-pdf-btn"
+                onClick={() => setSelectedSem('2')}
+                style={{
+                  width: 'auto',
+                  background: selectedSem === '2' ? undefined : '#f3f4f6',
+                  color: selectedSem === '2' ? undefined : '#111827',
+                }}
+              >
+                2nd Sem
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '18px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button
+              className="download-pdf-btn"
+              disabled={!selectedYear || !selectedSem}
+              onClick={() => setShowGradeSheet(true)}
+              style={{ width: 'auto' }}
+            >
+              View Grade Sheet
+            </button>
+            {!selectedYear ? (
+              <span style={{ color: '#6b7280' }}>Select a year to continue.</span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grade-sheet-container">
       <div className="grade-sheet-header">
@@ -302,6 +391,18 @@ export default function GradeSheet({ user }) {
         >
           {downloading ? 'Generating PDF...' : 'Download PDF'}
         </button>
+        <button
+          onClick={() => {
+            setShowGradeSheet(false);
+            setErrorMessage('');
+            setMarksheetData(null);
+          }}
+          className="btn-back"
+          style={{ marginLeft: '12px' }}
+          disabled={downloading}
+        >
+          Change Year/Sem
+        </button>
       </div>
 
       {errorMessage ? (
@@ -318,7 +419,9 @@ export default function GradeSheet({ user }) {
             <h1 className="exam-title">{data.examTitle}</h1>
             <h2 className="document-type">{data.documentType}</h2>
             <p className="document-subtitle">
-              {selectedSem === '2' ? 'second-semester(admission-batch2024)' : 'first-semester(admission-batch2024)'}
+              {selectedSem === '2'
+                ? `second-semester(admission-batch${selectedYear})`
+                : `first-semester(admission-batch${selectedYear})`}
             </p>
           </div>
         </div>
