@@ -150,6 +150,7 @@ export default function GradeSheet({ user }) {
           courses: sem1Marksheet.courses || [],
           totalCredits: sem1Marksheet.totalCredits || 0,
           totalCreditPoints: sem1Marksheet.totalCreditPoints || 0,
+          totalGradePoints: Number(((sem1Marksheet.courses || []).reduce((sum, c) => sum + (typeof c?.gradePoint === 'number' ? c.gradePoint : 0), 0)).toFixed(2)),
           sgpa: sem1Marksheet.sgpa || 0,
           publicationDate: publicationDate,
           classification: sem1Marksheet.classification || 'N/A'
@@ -481,9 +482,8 @@ export default function GradeSheet({ user }) {
           <table className="grade-table">
             <thead>
               <tr>
-                <th>{selectedSem === '2' ? 'SUBJECT' : 'SUBJECT CODE'}</th>
+                <th>SUBJECT</th>
                 <th>COURSE</th>
-                {selectedSem === '2' ? null : <th>COURSE TITLE</th>}
                 <th>CREDIT</th>
                 <th>GRADE</th>
                 <th>GRADE POINT</th>
@@ -514,9 +514,8 @@ export default function GradeSheet({ user }) {
 
                     return (
                       <tr key={index}>
-                        <td>{selectedSem === '2' ? course.subjectName : (course.subjectCode || '')}</td>
-                        <td>{selectedSem === '2' ? displayCourseType : course.subjectName}</td>
-                        {selectedSem === '2' ? null : <td>{course.subjectName}</td>}
+                        <td>{course.subjectName}</td>
+                        <td>{displayCourseType}</td>
                         <td>{course.credit}</td>
                         <td>{course.grade}</td>
                         <td>{course.gradePoint}</td>
@@ -526,10 +525,10 @@ export default function GradeSheet({ user }) {
                   });
                   })()}
                   <tr className="total-row">
-                    <td colSpan={selectedSem === '2' ? 2 : 3} className="total-label">TOTAL</td>
+                    <td colSpan={2} className="total-label">TOTAL</td>
                     <td>{marksheetData.totalCredits}</td>
                     <td></td>
-                    <td>{selectedSem === '2' ? marksheetData.totalGradePoints : ''}</td>
+                    <td>{marksheetData.totalGradePoints ?? ''}</td>
                     <td>{marksheetData.totalCreditPoints}</td>
                   </tr>
                 </>
@@ -538,9 +537,8 @@ export default function GradeSheet({ user }) {
                 <>
                   {data.gradeDetails.map((subject, index) => (
                     <tr key={index}>
-                      <td>{subject.subjectCode}</td>
+                      <td>{subject.courseTitle || subject.course}</td>
                       <td>{subject.course}</td>
-                      {selectedSem === '2' ? null : <td>{subject.courseTitle}</td>}
                       <td>{subject.credit}</td>
                       <td>{subject.grade}</td>
                       <td>{subject.gradePoint}</td>
@@ -548,10 +546,10 @@ export default function GradeSheet({ user }) {
                     </tr>
                   ))}
                   <tr className="total-row">
-                    <td colSpan={selectedSem === '2' ? 2 : 3} className="total-label">TOTAL</td>
+                    <td colSpan={2} className="total-label">TOTAL</td>
                     <td>{data.totals.totalCredits}</td>
                     <td></td>
-                    <td>{selectedSem === '2' ? '' : ''}</td>
+                    <td></td>
                     <td>{data.totals.totalCreditPoints}</td>
                   </tr>
                 </>
