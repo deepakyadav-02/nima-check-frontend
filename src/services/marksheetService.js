@@ -57,10 +57,10 @@ export const fetchMarksheetsByRollNo = async (autonomousRollNo) => {
         abcId: extractedAbcId
       };
     }
-  } else if (data.marksheets) {
-    console.log('📌 Response has marksheets property');
-    marksheetsArray = data.marksheets;
-    studentData = data.student;
+  } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+    console.log('📌 Response object (student + marksheets + optional secondSem2024)');
+    marksheetsArray = Array.isArray(data.marksheets) ? data.marksheets : [];
+    studentData = data.student ?? null;
     
     // Always check the nested student object for additional fields like ABC_ID
     if (marksheetsArray.length > 0 && marksheetsArray[0].student) {

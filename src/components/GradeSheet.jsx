@@ -34,7 +34,11 @@ export default function GradeSheet({ user }) {
   };
 
   const buildSecondSemMarksheetData = (secondSemRow) => {
-    const subjects = [
+    const isBBA =
+      String(secondSemRow?.Department || '').toUpperCase().includes('BBA') ||
+      secondSemRow?.['CC-201'] != null;
+
+    const ugSubjects = [
       { key: 'Major-3', courseType: 'Major-3', subjectCode: 'MAJOR-3' },
       { key: 'Major-4', courseType: 'Major-4', subjectCode: 'MAJOR-4' },
       { key: 'MINOR-2(20)', courseType: 'Minor-2', subjectCode: 'MINOR-2' },
@@ -43,41 +47,133 @@ export default function GradeSheet({ user }) {
       { key: 'SEC-I', courseType: 'SEC-I', subjectCode: 'SEC-I' },
     ];
 
-    const courses = subjects
-      .map(({ key, courseType, subjectCode }) => {
-        const s = secondSemRow?.[key];
-        if (!s) return null;
+    const bbaKeys = [
+      'CC-201',
+      'CC-202',
+      'CC-203',
+      'AEC-201',
+      'SEC-201',
+      'MDC-201',
+      'VAC-201-I.C',
+    ];
 
-        const gradePoint = toNum(s['Grade Point']);
-        const creditPoint = toNum(s.CreditPoint);
-        const derivedCredit =
-          gradePoint === 0 && creditPoint === 0
-            ? 0
-            : (gradePoint !== null && gradePoint !== 0 && creditPoint !== null)
-              ? creditPoint / gradePoint
-              : null;
+    // BBA 2nd-sem JSON has no per-subject CreditPoint; credits follow curriculum (total 27, same scale as BBA 1st sem).
+    const bbaSem2CreditsByCode = {
+      'CC-201': 4,
+      'CC-202': 4,
+      'CC-203': 4,
+      'AEC-201': 4,
+      'SEC-201': 4,
+      'MDC-201': 4,
+      'VAC-201-I.C': 3,
+    };
 
-        return {
-          subjectCode,
-          courseType,
-          subjectName: s.Subject || '',
-          // Keep 0 visible (don't coerce to empty string)
-          credit: derivedCredit === null ? '' : Number(derivedCredit.toFixed(0)),
-          grade: s.Grade || '',
-          gradePoint: gradePoint ?? '',
-          creditPoint: creditPoint ?? '',
-        };
-      })
-      .filter(Boolean);
+    let courses = [];
 
-    const totalGradePoints = courses.reduce((sum, c) => sum + (typeof c.gradePoint === 'number' ? c.gradePoint : 0), 0);
+    if (isBBA) {
+      courses = bbaKeys
+        .map((key) => {
+          const s = secondSemRow?.[key];
+          if (!s || typeof s !== 'object') return null;
+          const gradePoint = toNum(s['Grade Point']);
+          const creditPointFromJson =
+            toNum(s.CreditPoint) ?? toNum(s['Credit Point']) ?? toNum(s.creditPoint);
+          const prescribed = bbaSem2CreditsByCode[key];
+          let creditVal = null;
+          let creditPointVal = null;
+
+          if (creditPointFromJson !== null) {
+            creditPointVal = creditPointFromJson;
+            if (gradePoint === 0 && creditPointFromJson === 0) {
+              creditVal = 0;
+            } else if (gradePoint !== null && gradePoint !== 0) {
+              creditVal = creditPointFromJson / gradePoint;
+            } else if (prescribed != null) {
+              creditVal = prescribed;
+            }
+          } else if (prescribed != null && gradePoint !== null) {
+            creditVal = prescribed;
+            creditPointVal = prescribed * gradePoint;
+          }
+
+          return {
+            subjectCode: key,
+            courseType: key,
+            subjectName: s.Subject || '',
+            credit: creditVal === null ? '' : Number(creditVal.toFixed(0)),
+            grade: s.Grade || '',
+            gradePoint: gradePoint ?? '',
+            creditPoint: creditPointVal === null ? '' : Number(creditPointVal.toFixed(0)),
+          };
+        })
+        .filter(Boolean);
+    } else {
+      courses = ugSubjects
+        .map(({ key, courseType, subjectCode }) => {
+          const s = secondSemRow?.[key];
+          if (!s) return null;
+
+          const gradePoint = toNum(s['Grade Point']);
+          const creditPoint = toNum(s.CreditPoint);
+          const derivedCredit =
+            gradePoint === 0 && creditPoint === 0
+              ? 0
+              : gradePoint !== null && gradePoint !== 0 && creditPoint !== null
+                ? creditPoint / gradePoint
+                : null;
+
+          return {
+            subjectCode,
+            courseType,
+            subjectName: s.Subject || '',
+            credit: derivedCredit === null ? '' : Number(derivedCredit.toFixed(0)),
+            grade: s.Grade || '',
+            gradePoint: gradePoint ?? '',
+            creditPoint: creditPoint ?? '',
+          };
+        })
+        .filter(Boolean);
+    }
+
+    const totalGradePoints = courses.reduce(
+      (sum, c) => sum + (typeof c.gradePoint === 'number' ? c.gradePoint : 0),
+      0
+    );
+
+    const sumRowCredits = courses.reduce(
+      (sum, c) => sum + (typeof c.credit === 'number' ? c.credit : 0),
+      0
+    );
+    const sumRowCreditPoints = courses.reduce(
+      (sum, c) => sum + (typeof c.creditPoint === 'number' ? c.creditPoint : 0),
+      0
+    );
+
+    let totalCreditsOut = toNum(secondSemRow?.TotalCredit);
+    let totalCreditPointsOut = toNum(secondSemRow?.TotalCreditPoint);
+    let sgpaOut = toNum(secondSemRow?.SGPA);
+
+    if (isBBA) {
+      if (totalCreditsOut === null && sumRowCredits > 0) totalCreditsOut = sumRowCredits;
+      if (totalCreditPointsOut === null && sumRowCreditPoints > 0) {
+        totalCreditPointsOut = sumRowCreditPoints;
+      }
+      if (
+        sgpaOut === null &&
+        totalCreditsOut != null &&
+        totalCreditPointsOut != null &&
+        totalCreditsOut > 0
+      ) {
+        sgpaOut = Number((totalCreditPointsOut / totalCreditsOut).toFixed(2));
+      }
+    }
 
     return {
       courses,
-      totalCredits: toNum(secondSemRow?.TotalCredit) ?? '',
-      totalCreditPoints: toNum(secondSemRow?.TotalCreditPoint) ?? '',
+      totalCredits: totalCreditsOut ?? '',
+      totalCreditPoints: totalCreditPointsOut ?? '',
       totalGradePoints: Number(totalGradePoints.toFixed(2)),
-      sgpa: toNum(secondSemRow?.SGPA) ?? '',
+      sgpa: sgpaOut ?? '',
       publicationDate: data.publicationDate,
       classification: secondSemRow?.Classification || 'N/A',
     };
@@ -110,9 +206,18 @@ export default function GradeSheet({ user }) {
 
           setMarksheetData(buildSecondSemMarksheetData(secondSemRow));
 
-          const majorSubject = secondSemRow?.['Major-3']?.Subject || secondSemRow?.['Major-4']?.Subject || '';
-          const minorSubject = secondSemRow?.['MINOR-2(20)']?.Subject || '';
-          const aecSubject = secondSemRow?.['AEC-2']?.Subject || '';
+          const isBbaRow =
+            String(secondSemRow?.Department || '').toUpperCase().includes('BBA') ||
+            secondSemRow?.['CC-201'] != null;
+          const majorSubject = isBbaRow
+            ? secondSemRow?.['CC-201']?.Subject || ''
+            : secondSemRow?.['Major-3']?.Subject || secondSemRow?.['Major-4']?.Subject || '';
+          const minorSubject = isBbaRow
+            ? secondSemRow?.['CC-202']?.Subject || ''
+            : secondSemRow?.['MINOR-2(20)']?.Subject || '';
+          const aecSubject = isBbaRow
+            ? secondSemRow?.['AEC-201']?.Subject || ''
+            : secondSemRow?.['AEC-2']?.Subject || '';
           const detectedLanguage =
             String(aecSubject).toLowerCase().includes('odia') ? 'ODIA' : (aecSubject ? String(aecSubject).toUpperCase() : 'ENGLISH');
 
