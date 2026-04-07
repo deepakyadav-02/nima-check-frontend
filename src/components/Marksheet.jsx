@@ -33,9 +33,60 @@ export default function Marksheet({ user }) {
         return;
       }
       
-      // Use the service to fetch marksheets
-      const { marksheets: marksheetsArray, studentInfo: studentData } = await fetchMarksheetsByRollNo(autonomousRollNo);
-      
+      // Use the service to fetch marksheets (+ optional 2nd sem raw rows)
+      const {
+        marksheets: marksheetsArray,
+        studentInfo: studentData,
+        pgSecondSem2024,
+      } = await fetchMarksheetsByRollNo(autonomousRollNo);
+
+      // If no UGMarksheet rows exist but PG 2nd-sem row exists, show it as a single "semester" entry.
+      if ((!marksheetsArray || marksheetsArray.length === 0) && pgSecondSem2024) {
+        const pgSem = {
+          _id: 'pg2ndsem2024',
+          source: 'pg2ndsem2024',
+          semester: pgSecondSem2024.semester ?? 2,
+          courses: Array.isArray(pgSecondSem2024.courses)
+            ? pgSecondSem2024.courses.map((c) => ({
+                subjectName: c.subjectName,
+                courseType: c.courseType,
+                credit: c.credit,
+                // Map PG columns into the existing table fields
+                theory: c.endsem ?? '-',
+                internal: c.midsem ?? '-',
+                practical: c.practical ?? '-',
+                marks: c.marks,
+                grade: c.grade,
+                gradePoint: c.gradePoint,
+                creditPoint: typeof c.creditPoint === 'number' ? c.creditPoint : 0,
+              }))
+            : [],
+          totalCredits: pgSecondSem2024.totalCredits ?? 0,
+          totalCreditPoints: pgSecondSem2024.totalCreditPoints ?? 0,
+          sgpa: pgSecondSem2024.sgpa ?? 0,
+          percentage: pgSecondSem2024.percentage ?? 0,
+          classification: pgSecondSem2024.classification ?? 'N/A',
+          student: {
+            'Name of the Students': pgSecondSem2024.applicantName ?? studentData?.name,
+            'Autonomous Roll No': pgSecondSem2024.autonomousRollNo ?? autonomousRollNo,
+            'Roll No': pgSecondSem2024.collegeRollNo ?? studentData?.rollNo,
+            Department: pgSecondSem2024.department ?? studentData?.department,
+          },
+        };
+
+        setMarksheets([pgSem]);
+        setStudentInfo(
+          studentData ?? {
+            name: pgSecondSem2024.applicantName,
+            autonomousRollNo: pgSecondSem2024.autonomousRollNo,
+            rollNo: pgSecondSem2024.collegeRollNo,
+            department: pgSecondSem2024.department,
+          }
+        );
+        setSelectedSemester(pgSem);
+        return;
+      }
+
       setMarksheets(marksheetsArray);
       setStudentInfo(studentData);
       if (marksheetsArray.length > 0) {
@@ -255,8 +306,8 @@ export default function Marksheet({ user }) {
                     <th rowSpan="2">CP</th>
                   </tr>
                   <tr>
-                    <th>Theory</th>
-                    <th>Internal</th>
+                    <th>{selectedSemester?.source === 'pg2ndsem2024' ? 'End Sem' : 'Theory'}</th>
+                    <th>{selectedSemester?.source === 'pg2ndsem2024' ? 'Mid Sem' : 'Internal'}</th>
                     <th>Practical</th>
                   </tr>
                 </thead>
@@ -275,7 +326,7 @@ export default function Marksheet({ user }) {
                         <strong>{course.grade}</strong>
                       </td>
                       <td>{course.gradePoint}</td>
-                      <td>{course.creditPoint.toFixed(2)}</td>
+                      <td>{typeof course.creditPoint === 'number' ? course.creditPoint.toFixed(2) : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -296,21 +347,31 @@ export default function Marksheet({ user }) {
                   <div className="summary-icon">⭐</div>
                   <div className="summary-content">
                     <div className="summary-label">Total Credit Points</div>
-                    <div className="summary-value">{selectedSemester.totalCreditPoints.toFixed(2)}</div>
+                    <div className="summary-value">
+                      {typeof selectedSemester.totalCreditPoints === 'number'
+                        ? selectedSemester.totalCreditPoints.toFixed(2)
+                        : '-'}
+                    </div>
                   </div>
                 </div>
                 <div className="summary-card highlight">
                   <div className="summary-icon">🎯</div>
                   <div className="summary-content">
                     <div className="summary-label">SGPA</div>
-                    <div className="summary-value">{selectedSemester.sgpa.toFixed(2)}</div>
+                    <div className="summary-value">
+                      {typeof selectedSemester.sgpa === 'number' ? selectedSemester.sgpa.toFixed(2) : '-'}
+                    </div>
                   </div>
                 </div>
                 <div className="summary-card highlight">
                   <div className="summary-icon">📊</div>
                   <div className="summary-content">
                     <div className="summary-label">Percentage</div>
-                    <div className="summary-value">{selectedSemester.percentage.toFixed(2)}%</div>
+                    <div className="summary-value">
+                      {typeof selectedSemester.percentage === 'number'
+                        ? `${selectedSemester.percentage.toFixed(2)}%`
+                        : '-'}
+                    </div>
                   </div>
                 </div>
               </div>

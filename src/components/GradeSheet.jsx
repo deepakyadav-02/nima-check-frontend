@@ -179,6 +179,40 @@ export default function GradeSheet({ user }) {
     };
   };
 
+  const buildPGSecondSemMarksheetData = (pgRow) => {
+    const courses = Array.isArray(pgRow?.courses)
+      ? pgRow.courses.map((c) => ({
+          subjectCode: c.courseType || '',
+          courseType: c.courseType || '',
+          subjectName: c.subjectName || '',
+          credit: c.credit ?? '',
+          grade: c.grade ?? '',
+          gradePoint: c.gradePoint ?? '',
+          creditPoint: c.creditPoint ?? '',
+          // keep raw marks for reference in table (if table shows)
+          marks: c.marks ?? '',
+          midsem: c.midsem ?? '',
+          endsem: c.endsem ?? '',
+          practical: c.practical ?? '',
+        }))
+      : [];
+
+    const totalGradePoints = courses.reduce(
+      (sum, c) => sum + (typeof c.gradePoint === 'number' ? c.gradePoint : 0),
+      0
+    );
+
+    return {
+      courses,
+      totalCredits: pgRow?.totalCredits ?? '',
+      totalCreditPoints: pgRow?.totalCreditPoints ?? '',
+      totalGradePoints: Number(totalGradePoints.toFixed(2)),
+      sgpa: pgRow?.sgpa ?? '',
+      publicationDate: data.publicationDate,
+      classification: pgRow?.classification || 'N/A',
+    };
+  };
+
   const fetchStudentData = async () => {
     try {
       setLoading(true);
@@ -194,7 +228,30 @@ export default function GradeSheet({ user }) {
       }
 
       if (selectedSem === '2') {
-        const { secondSem2024: secondSemRow } = await fetchMarksheetsByRollNo(autonomousRollNo);
+        const { secondSem2024: secondSemRow, pgSecondSem2024 } =
+          await fetchMarksheetsByRollNo(autonomousRollNo);
+
+        // PG 2nd sem (camelCase row from pg2ndsem2024)
+        if (pgSecondSem2024) {
+          setMarksheetData(buildPGSecondSemMarksheetData(pgSecondSem2024));
+
+          setData((prevData) => ({
+            ...prevData,
+            studentInfo: {
+              ...prevData.studentInfo,
+              name: pgSecondSem2024.applicantName || prevData.studentInfo.name,
+              examRollNo: pgSecondSem2024.collegeRollNo || prevData.studentInfo.examRollNo,
+              registrationNo:
+                pgSecondSem2024.autonomousRollNo || prevData.studentInfo.registrationNo,
+              course: pgSecondSem2024.course
+                ? `COURSE: ${String(pgSecondSem2024.course).toUpperCase()}`
+                : prevData.studentInfo.course,
+              coreTwo: '',
+            },
+          }));
+
+          return;
+        }
 
         if (secondSemRow) {
           const apiStudentInfo = {

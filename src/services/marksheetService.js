@@ -31,6 +31,7 @@ export const fetchMarksheetsByRollNo = async (autonomousRollNo) => {
   let marksheetsArray = [];
   let studentData = null;
   const secondSem2024 = Array.isArray(data) ? null : (data?.secondSem2024 || null);
+  const pgSecondSem2024 = Array.isArray(data) ? null : (data?.pgSecondSem2024 || null);
   
   if (Array.isArray(data)) {
     console.log('📌 Response is an array, using it directly');
@@ -95,7 +96,8 @@ export const fetchMarksheetsByRollNo = async (autonomousRollNo) => {
   return {
     marksheets: marksheetsArray,
     studentInfo: studentData,
-    secondSem2024
+    secondSem2024,
+    pgSecondSem2024
   };
 };
 
