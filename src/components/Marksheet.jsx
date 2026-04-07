@@ -40,12 +40,22 @@ export default function Marksheet({ user }) {
         pgSecondSem2024,
       } = await fetchMarksheetsByRollNo(autonomousRollNo);
 
-      // If no UGMarksheet rows exist but PG 2nd-sem row exists, show it as a single "semester" entry.
-      if ((!marksheetsArray || marksheetsArray.length === 0) && pgSecondSem2024) {
+      // If PG 2nd-sem row exists, expose it as an additional "semester tab" entry.
+      // Note: some uploaded PG JSONs may still carry semester: 1; if it collides with an existing marksheet semester,
+      // show it as semester 2 in the UI to keep both visible.
+      let combined = Array.isArray(marksheetsArray) ? [...marksheetsArray] : [];
+
+      if (pgSecondSem2024) {
+        const existingSemesters = new Set(combined.map((m) => Number(m?.semester)));
+        let displaySemester = Number(pgSecondSem2024.semester ?? 2);
+        if (existingSemesters.has(displaySemester)) {
+          displaySemester = 2;
+        }
+
         const pgSem = {
           _id: 'pg2ndsem2024',
           source: 'pg2ndsem2024',
-          semester: pgSecondSem2024.semester ?? 2,
+          semester: displaySemester,
           courses: Array.isArray(pgSecondSem2024.courses)
             ? pgSecondSem2024.courses.map((c) => ({
                 subjectName: c.subjectName,
@@ -74,23 +84,28 @@ export default function Marksheet({ user }) {
           },
         };
 
-        setMarksheets([pgSem]);
-        setStudentInfo(
-          studentData ?? {
-            name: pgSecondSem2024.applicantName,
-            autonomousRollNo: pgSecondSem2024.autonomousRollNo,
-            rollNo: pgSecondSem2024.collegeRollNo,
-            department: pgSecondSem2024.department,
-          }
-        );
-        setSelectedSemester(pgSem);
-        return;
+        // Avoid duplicating if already appended (hot reload)
+        combined = combined.filter((m) => m?._id !== 'pg2ndsem2024');
+        combined.push(pgSem);
       }
 
-      setMarksheets(marksheetsArray);
-      setStudentInfo(studentData);
-      if (marksheetsArray.length > 0) {
-        setSelectedSemester(marksheetsArray[0]);
+      // Sort tabs by semester number for a stable UI
+      combined.sort((a, b) => Number(a?.semester ?? 0) - Number(b?.semester ?? 0));
+
+      setMarksheets(combined);
+      setStudentInfo(
+        studentData ??
+          (pgSecondSem2024
+            ? {
+                name: pgSecondSem2024.applicantName,
+                autonomousRollNo: pgSecondSem2024.autonomousRollNo,
+                rollNo: pgSecondSem2024.collegeRollNo,
+                department: pgSecondSem2024.department,
+              }
+            : null)
+      );
+      if (combined.length > 0) {
+        setSelectedSemester(combined[0]);
       }
     } catch (err) {
       console.error('❌ Error fetching marksheets:', err);
