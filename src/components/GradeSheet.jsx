@@ -213,6 +213,18 @@ export default function GradeSheet({ user }) {
     };
   };
 
+  const formatCourseName = (v) => {
+    const s = v == null ? '' : String(v).trim();
+    if (!s) return '';
+    // Prefer keeping acronyms as-is (e.g., ODIA), but normalize mixed-case words.
+    if (/^[A-Z\s-]+$/.test(s)) return s;
+    return s
+      .toLowerCase()
+      .split(/\s+/)
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+      .join(' ');
+  };
+
   const fetchStudentData = async () => {
     try {
       setLoading(true);
@@ -235,6 +247,8 @@ export default function GradeSheet({ user }) {
         if (pgSecondSem2024) {
           setMarksheetData(buildPGSecondSemMarksheetData(pgSecondSem2024));
 
+          const courseName = formatCourseName(pgSecondSem2024.department || pgSecondSem2024.course);
+
           setData((prevData) => ({
             ...prevData,
             studentInfo: {
@@ -243,9 +257,7 @@ export default function GradeSheet({ user }) {
               examRollNo: pgSecondSem2024.collegeRollNo || prevData.studentInfo.examRollNo,
               registrationNo:
                 pgSecondSem2024.autonomousRollNo || prevData.studentInfo.registrationNo,
-              course: pgSecondSem2024.course
-                ? `COURSE: ${String(pgSecondSem2024.course).toUpperCase()}`
-                : prevData.studentInfo.course,
+              course: courseName ? `COURSE: ${courseName}` : prevData.studentInfo.course,
               coreTwo: '',
             },
           }));
