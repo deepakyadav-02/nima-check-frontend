@@ -55,16 +55,19 @@ export default function Marksheet({ user }) {
         const pgSem = {
           _id: 'pg2ndsem2024',
           source: 'pg2ndsem2024',
+          studentType: 'PGStudent',
           semester: displaySemester,
           courses: Array.isArray(pgSecondSem2024.courses)
             ? pgSecondSem2024.courses.map((c) => ({
                 subjectName: c.subjectName,
                 courseType: c.courseType,
                 credit: c.credit,
-                // Map PG columns into the existing table fields
+                midsem: c.midsem ?? 0,
+                endsem: c.endsem ?? 0,
+                practical: c.practical ?? 0,
+                // Back-compat for existing table cells
                 theory: c.endsem ?? '-',
                 internal: c.midsem ?? '-',
-                practical: c.practical ?? '-',
                 marks: c.marks,
                 grade: c.grade,
                 gradePoint: c.gradePoint,
@@ -226,6 +229,62 @@ export default function Marksheet({ user }) {
     );
   }
 
+  const isPG = selectedSemester?.studentType === 'PGStudent' || selectedSemester?.source === 'pg2ndsem2024';
+  const departmentName =
+    studentInfo?.department ||
+    selectedSemester?.student?.Department ||
+    selectedSemester?.student?.Course ||
+    '';
+  const pgCourseLine = departmentName
+    ? `MASTER OF SCIENCE IN ${String(departmentName).toUpperCase()}`
+    : 'MASTER OF SCIENCE';
+
+  const getMid = (course) => course?.midsem ?? course?.internal ?? '-';
+  const getEnd = (course) => course?.endsem ?? course?.theory ?? '-';
+  const getPractical = (course) => course?.practical ?? '-';
+
+  const toNum = (v) => {
+    if (v === null || v === undefined) return null;
+    const n = Number(String(v).trim());
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const getPGRowMarks = (course) => {
+    const mid = toNum(course?.midsem ?? course?.internal);
+    const end = toNum(course?.endsem ?? course?.theory);
+    const practical = toNum(course?.practical);
+    const total = toNum(course?.marks);
+
+    // Heuristic to match reference layout:
+    // - Theory papers: Mid FM 20, End FM 50, Total FM 70
+    // - Practical-only papers (no mid/end, only practical marks): End FM 50, Total FM 50
+    const isPracticalOnly =
+      (mid === null || mid === 0) &&
+      (end === null || end === 0) &&
+      practical !== null &&
+      practical > 0;
+
+    if (isPracticalOnly) {
+      return {
+        midFm: '',
+        midMs: '',
+        endFm: 50,
+        endMs: practical,
+        totalFm: 50,
+        totalMs: total ?? practical,
+      };
+    }
+
+    return {
+      midFm: 20,
+      midMs: mid ?? '',
+      endFm: 50,
+      endMs: end ?? '',
+      totalFm: 70,
+      totalMs: total ?? '',
+    };
+  };
+
   return (
     <div className="marksheet-container">
       <div className="marksheet-header-section">
@@ -271,7 +330,7 @@ export default function Marksheet({ user }) {
               </div>
               <div className="college-info">
                 <h1>NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h1>
-                <h2>EXAMINATION MARKSHEET</h2>
+                <h2>{isPG ? 'MARK SHEET CUM GRADE SHEET' : 'EXAMINATION MARKSHEET'}</h2>
                 <h3>SEMESTER - {selectedSemester.semester} (BATCH - 2024)</h3>
                 <p className="college-address">At/Po: Nimapara, Dist: Puri, Odisha - 752106</p>
               </div>
@@ -284,6 +343,13 @@ export default function Marksheet({ user }) {
                 <span className="colon">:</span>
                 <span className="value">{studentInfo?.name || selectedSemester.student?.['Name of the Students'] || 'N/A'}</span>
               </div>
+              {isPG && (
+                <div className="detail-row">
+                  <span className="label">COURSE</span>
+                  <span className="colon">:</span>
+                  <span className="value">{pgCourseLine}</span>
+                </div>
+              )}
               <div className="detail-row">
                 <span className="label">COLLEGE ROLL NUMBER</span>
                 <span className="colon">:</span>
@@ -309,39 +375,91 @@ export default function Marksheet({ user }) {
             <div className="marks-table-container">
               <table className="marks-table">
                 <thead>
-                  <tr>
-                    <th rowSpan="2">S.No</th>
-                    <th rowSpan="2">Subject Name</th>
-                    <th rowSpan="2">Course Type</th>
-                    <th rowSpan="2">Credit</th>
-                    <th colSpan="3">Marks Obtained</th>
-                    <th rowSpan="2">Total</th>
-                    <th rowSpan="2">Grade</th>
-                    <th rowSpan="2">GP</th>
-                    <th rowSpan="2">CP</th>
-                  </tr>
-                  <tr>
-                    <th>{selectedSemester?.source === 'pg2ndsem2024' ? 'End Sem' : 'Theory'}</th>
-                    <th>{selectedSemester?.source === 'pg2ndsem2024' ? 'Mid Sem' : 'Internal'}</th>
-                    <th>Practical</th>
-                  </tr>
+                  {isPG ? (
+                    <>
+                      <tr>
+                        <th rowSpan="2">S.No</th>
+                        <th rowSpan="2">Subjects</th>
+                        <th colSpan="2">Mid Sem</th>
+                        <th colSpan="2">End Sem</th>
+                        <th colSpan="2">Total</th>
+                        <th rowSpan="2">Credit</th>
+                        <th rowSpan="2">Grade</th>
+                        <th rowSpan="2">GP</th>
+                        <th rowSpan="2">CP</th>
+                      </tr>
+                      <tr>
+                        <th>FM</th>
+                        <th>MS</th>
+                        <th>FM</th>
+                        <th>MS</th>
+                        <th>FM</th>
+                        <th>MS</th>
+                      </tr>
+                    </>
+                  ) : (
+                    <>
+                      <tr>
+                        <th rowSpan="2">S.No</th>
+                        <th rowSpan="2">Subject Name</th>
+                        <th rowSpan="2">Course Type</th>
+                        <th rowSpan="2">Credit</th>
+                        <th colSpan="3">Marks Obtained</th>
+                        <th rowSpan="2">Total</th>
+                        <th rowSpan="2">Grade</th>
+                        <th rowSpan="2">GP</th>
+                        <th rowSpan="2">CP</th>
+                      </tr>
+                      <tr>
+                        <th>Theory</th>
+                        <th>Internal</th>
+                        <th>Practical</th>
+                      </tr>
+                    </>
+                  )}
                 </thead>
                 <tbody>
                   {selectedSemester.courses.map((course, index) => (
                     <tr key={index}>
                       <td>{index + 1}</td>
                       <td className="subject-name">{course.subjectName}</td>
-                      <td>{course.courseType}</td>
-                      <td>{course.credit}</td>
-                      <td>{course.theory || '-'}</td>
-                      <td>{course.internal || '-'}</td>
-                      <td>{course.practical || '-'}</td>
-                      <td><strong>{course.marks}</strong></td>
-                      <td className="grade-cell">
-                        <strong>{course.grade}</strong>
-                      </td>
-                      <td>{course.gradePoint}</td>
-                      <td>{typeof course.creditPoint === 'number' ? course.creditPoint.toFixed(2) : '-'}</td>
+                      {isPG ? (
+                        <>
+                          {(() => {
+                            const m = getPGRowMarks(course);
+                            return (
+                              <>
+                                <td>{m.midFm}</td>
+                                <td>{m.midMs}</td>
+                                <td>{m.endFm}</td>
+                                <td>{m.endMs}</td>
+                                <td>{m.totalFm}</td>
+                                <td><strong>{m.totalMs}</strong></td>
+                              </>
+                            );
+                          })()}
+                          <td>{course.credit}</td>
+                          <td className="grade-cell">
+                            <strong>{course.grade}</strong>
+                          </td>
+                          <td>{course.gradePoint}</td>
+                          <td>{typeof course.creditPoint === 'number' ? course.creditPoint.toFixed(2) : '-'}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td>{course.courseType}</td>
+                          <td>{course.credit}</td>
+                          <td>{course.theory || '-'}</td>
+                          <td>{course.internal || '-'}</td>
+                          <td>{course.practical || '-'}</td>
+                          <td><strong>{course.marks}</strong></td>
+                          <td className="grade-cell">
+                            <strong>{course.grade}</strong>
+                          </td>
+                          <td>{course.gradePoint}</td>
+                          <td>{typeof course.creditPoint === 'number' ? course.creditPoint.toFixed(2) : '-'}</td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -349,66 +467,99 @@ export default function Marksheet({ user }) {
             </div>
 
             <div className="summary-section">
-              <h3>Semester Summary</h3>
-              <div className="summary-grid">
-                <div className="summary-card">
-                  <div className="summary-icon">📚</div>
-                  <div className="summary-content">
-                    <div className="summary-label">Total Credits</div>
-                    <div className="summary-value">{selectedSemester.totalCredits}</div>
-                  </div>
+              {isPG ? (
+                <div className="pg-summary-line">
+                  <span><strong>Result</strong>: {selectedSemester.classification || 'N/A'}</span>
+                  <span><strong>Credit Index</strong>: {typeof selectedSemester.totalCreditPoints === 'number' ? selectedSemester.totalCreditPoints.toFixed(0) : selectedSemester.totalCreditPoints}</span>
+                  <span><strong>SGPA</strong>: {typeof selectedSemester.sgpa === 'number' ? selectedSemester.sgpa.toFixed(2) : selectedSemester.sgpa}</span>
                 </div>
-                <div className="summary-card">
-                  <div className="summary-icon">⭐</div>
-                  <div className="summary-content">
-                    <div className="summary-label">Total Credit Points</div>
-                    <div className="summary-value">
-                      {typeof selectedSemester.totalCreditPoints === 'number'
-                        ? selectedSemester.totalCreditPoints.toFixed(2)
-                        : '-'}
+              ) : (
+                <>
+                  <h3>Semester Summary</h3>
+                  <div className="summary-grid">
+                    <div className="summary-card">
+                      <div className="summary-content">
+                        <div className="summary-label">Total Credits</div>
+                        <div className="summary-value">{selectedSemester.totalCredits}</div>
+                      </div>
+                    </div>
+                    <div className="summary-card">
+                      <div className="summary-content">
+                        <div className="summary-label">Total Credit Points</div>
+                        <div className="summary-value">
+                          {typeof selectedSemester.totalCreditPoints === 'number'
+                            ? selectedSemester.totalCreditPoints.toFixed(2)
+                            : '-'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="summary-card highlight">
+                      <div className="summary-content">
+                        <div className="summary-label">SGPA</div>
+                        <div className="summary-value">
+                          {typeof selectedSemester.sgpa === 'number' ? selectedSemester.sgpa.toFixed(2) : '-'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="summary-card highlight">
+                      <div className="summary-content">
+                        <div className="summary-label">Percentage</div>
+                        <div className="summary-value">
+                          {typeof selectedSemester.percentage === 'number'
+                            ? `${selectedSemester.percentage.toFixed(2)}%`
+                            : '-'}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="summary-card highlight">
-                  <div className="summary-icon">🎯</div>
-                  <div className="summary-content">
-                    <div className="summary-label">SGPA</div>
-                    <div className="summary-value">
-                      {typeof selectedSemester.sgpa === 'number' ? selectedSemester.sgpa.toFixed(2) : '-'}
-                    </div>
-                  </div>
-                </div>
-                <div className="summary-card highlight">
-                  <div className="summary-icon">📊</div>
-                  <div className="summary-content">
-                    <div className="summary-label">Percentage</div>
-                    <div className="summary-value">
-                      {typeof selectedSemester.percentage === 'number'
-                        ? `${selectedSemester.percentage.toFixed(2)}%`
-                        : '-'}
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <div className="classification-banner">
-                <div className="classification-label">Classification</div>
-                <div className="classification-value">{selectedSemester.classification}</div>
-              </div>
+                  <div className="classification-banner">
+                    <div className="classification-label">Classification</div>
+                    <div className="classification-value">{selectedSemester.classification}</div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="grade-legend">
-              <h4>Grade Point System:</h4>
-              <div className="legend-items">
-                <span className="legend-item"><strong>O (10)</strong>: 90-100</span>
-                <span className="legend-item"><strong>A+ (9)</strong>: 80-89</span>
-                <span className="legend-item"><strong>A (8)</strong>: 70-79</span>
-                <span className="legend-item"><strong>B+ (7)</strong>: 60-69</span>
-                <span className="legend-item"><strong>B (6)</strong>: 50-59</span>
-                <span className="legend-item"><strong>C (5)</strong>: 40-49</span>
-                <span className="legend-item"><strong>P (4)</strong>: 35-39</span>
-                <span className="legend-item"><strong>F (0)</strong>: Below 35</span>
-              </div>
+              {isPG ? (
+                <>
+                  <h4>GRADING SYSTEM</h4>
+                  <table className="grading-system-table">
+                    <thead>
+                      <tr>
+                        <th>Grade</th>
+                        <th>Marks Secured from 100</th>
+                        <th>Grade Points</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>O</td><td>90-100</td><td>10</td></tr>
+                      <tr><td>A+</td><td>80-89</td><td>9</td></tr>
+                      <tr><td>A</td><td>70-79</td><td>8</td></tr>
+                      <tr><td>B+</td><td>60-69</td><td>7</td></tr>
+                      <tr><td>B</td><td>50-59</td><td>6</td></tr>
+                      <tr><td>C</td><td>45-49</td><td>5</td></tr>
+                      <tr><td>D</td><td>40-44</td><td>4</td></tr>
+                      <tr><td>F</td><td>Below 40</td><td>0</td></tr>
+                    </tbody>
+                  </table>
+                </>
+              ) : (
+                <>
+                  <h4>Grade Point System:</h4>
+                  <div className="legend-items">
+                    <span className="legend-item"><strong>O (10)</strong>: 90-100</span>
+                    <span className="legend-item"><strong>A+ (9)</strong>: 80-89</span>
+                    <span className="legend-item"><strong>A (8)</strong>: 70-79</span>
+                    <span className="legend-item"><strong>B+ (7)</strong>: 60-69</span>
+                    <span className="legend-item"><strong>B (6)</strong>: 50-59</span>
+                    <span className="legend-item"><strong>C (5)</strong>: 40-49</span>
+                    <span className="legend-item"><strong>P (4)</strong>: 35-39</span>
+                    <span className="legend-item"><strong>F (0)</strong>: Below 35</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -33,6 +33,57 @@ export default function GradeSheet({ user }) {
     return Number.isFinite(n) ? n : null;
   };
 
+  const hasAny = (v) => v !== null && v !== undefined && String(v).trim() !== '';
+
+  const isPGLikeCourseRow = (course) => {
+    if (!course || typeof course !== 'object') return false;
+    // PG rows commonly carry midsem/endsem/practical + marks; UG rows carry theory/internal/practical.
+    return (
+      hasAny(course.midsem) ||
+      hasAny(course.endsem) ||
+      hasAny(course.practical) ||
+      hasAny(course.marks)
+    );
+  };
+
+  const detectIsPGMarksheetLayout = (courses) => {
+    if (!Array.isArray(courses) || courses.length === 0) return false;
+    return courses.some(isPGLikeCourseRow);
+  };
+
+  const getPGRowMarks = (course) => {
+    const mid = toNum(course?.midsem ?? course?.internal);
+    const end = toNum(course?.endsem ?? course?.theory);
+    const practical = toNum(course?.practical);
+    const total = toNum(course?.marks);
+
+    const isPracticalOnly =
+      (mid === null || mid === 0) &&
+      (end === null || end === 0) &&
+      practical !== null &&
+      practical > 0;
+
+    if (isPracticalOnly) {
+      return {
+        midFm: '',
+        midMs: '',
+        endFm: 50,
+        endMs: practical,
+        totalFm: 50,
+        totalMs: total ?? practical,
+      };
+    }
+
+    return {
+      midFm: 20,
+      midMs: mid ?? '',
+      endFm: 50,
+      endMs: end ?? '',
+      totalFm: 70,
+      totalMs: total ?? '',
+    };
+  };
+
   const buildSecondSemMarksheetData = (secondSemRow) => {
     const isBBA =
       String(secondSemRow?.Department || '').toUpperCase().includes('BBA') ||
@@ -257,7 +308,7 @@ export default function GradeSheet({ user }) {
               examRollNo: pgSecondSem2024.collegeRollNo || prevData.studentInfo.examRollNo,
               registrationNo:
                 pgSecondSem2024.autonomousRollNo || prevData.studentInfo.registrationNo,
-              course: courseName ? `COURSE: ${courseName}` : prevData.studentInfo.course,
+              course: courseName ? `MASTER OF SCIENCE IN ${courseName.toUpperCase()}` : prevData.studentInfo.course,
               coreTwo: '',
             },
           }));
@@ -346,30 +397,25 @@ export default function GradeSheet({ user }) {
           }
         }
         
-        // Determine course info (CORE-1: MAJOR SUBJECT, CORE-2: MINOR SUBJECT)
-        let courseInfo = data.studentInfo.course;
+        const deptFromApi = formatCourseName(apiStudentInfo?.department);
+        const looksPG = detectIsPGMarksheetLayout(sem1Marksheet?.courses || []);
+        const courseInfo = looksPG
+          ? deptFromApi
+            ? `MASTER OF SCIENCE IN ${deptFromApi.toUpperCase()}`
+            : data.studentInfo.course
+          : data.studentInfo.course;
+
+        // Keep CORE-2 only for UG-like semester-1 view; PG reference format doesn't use CORE lines.
         let coreTwoInfo = data.studentInfo.coreTwo;
-
-        if (sem1Marksheet.courses && sem1Marksheet.courses.length > 0) {
-          const majorCourse = sem1Marksheet.courses.find(course => 
-            course.courseType && course.courseType.toLowerCase().startsWith('major')
-          );
-          const minorCourse = sem1Marksheet.courses.find(course => 
-            course.courseType && course.courseType.toLowerCase().startsWith('minor')
-          );
-
-          if (majorCourse?.subjectName) {
-            courseInfo = `CORE-1: ${majorCourse.subjectName.toUpperCase()}`;
-          } else if (sem1Marksheet.courses[0]) {
-            const firstCourse = sem1Marksheet.courses[0];
-            courseInfo = `${firstCourse.courseType?.toUpperCase() || ''}: ${firstCourse.subjectName?.toUpperCase() || ''}`.trim();
+        if (!looksPG) {
+          if (sem1Marksheet.courses && sem1Marksheet.courses.length > 0) {
+            const minorCourse = sem1Marksheet.courses.find(course =>
+              course.courseType && course.courseType.toLowerCase().startsWith('minor')
+            );
+            coreTwoInfo = minorCourse?.subjectName ? `CORE-2: ${minorCourse.subjectName.toUpperCase()}` : '';
           }
-
-          if (minorCourse?.subjectName) {
-            coreTwoInfo = `CORE-2: ${minorCourse.subjectName.toUpperCase()}`;
-          } else {
-            coreTwoInfo = '';
-          }
+        } else {
+          coreTwoInfo = '';
         }
         
         // Update the data with API values
@@ -600,12 +646,12 @@ export default function GradeSheet({ user }) {
         <div className="document-header">
           <img src="/college.png" alt="College Logo" className="college-logo" />
           <div className="document-header-text">
-            <h1 className="exam-title">{data.examTitle}</h1>
-            <h2 className="document-type">{data.documentType}</h2>
+            <h1 className="exam-title">NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h1>
+            <h2 className="document-type">MARK SHEET CUM GRADE SHEET</h2>
             <p className="document-subtitle">
               {selectedSem === '2'
-                ? `second-semester(admission-batch${selectedYear})`
-                : `first-semester(admission-batch${selectedYear})`}
+                ? `SECOND-SEMESTER(ADMISSION-BATCH${selectedYear})`
+                : `FIRST-SEMESTER(ADMISSION-BATCH${selectedYear})`}
             </p>
           </div>
         </div>
@@ -656,16 +702,44 @@ export default function GradeSheet({ user }) {
 
         {/* Grade Details Table */}
         <div className="grade-table-container">
-          <table className="grade-table">
+          {(() => {
+            const isPGLayout = detectIsPGMarksheetLayout(marksheetData?.courses || []);
+            const tableClass = `grade-table${isPGLayout ? ' pg-marksheet-table' : ''}`;
+            return (
+          <table className={tableClass}>
             <thead>
-              <tr>
-                <th>SUBJECT</th>
-                <th>COURSE</th>
-                <th>CREDIT</th>
-                <th>GRADE</th>
-                <th>GRADE POINT</th>
-                <th>CREDIT POINT</th>
-              </tr>
+              {isPGLayout ? (
+                <>
+                  <tr>
+                    <th rowSpan={2}>SUBJECT</th>
+                    <th rowSpan={2}>COURSE</th>
+                    <th colSpan={2}>MID SEM</th>
+                    <th colSpan={2}>END SEM</th>
+                    <th colSpan={2}>TOTAL</th>
+                    <th rowSpan={2}>CREDIT</th>
+                    <th rowSpan={2}>GRADE</th>
+                    <th rowSpan={2}>GP</th>
+                    <th rowSpan={2}>CP</th>
+                  </tr>
+                  <tr>
+                    <th>FM</th>
+                    <th>MS</th>
+                    <th>FM</th>
+                    <th>MS</th>
+                    <th>FM</th>
+                    <th>MS</th>
+                  </tr>
+                </>
+              ) : (
+                <tr>
+                  <th>SUBJECT</th>
+                  <th>COURSE</th>
+                  <th>CREDIT</th>
+                  <th>GRADE</th>
+                  <th>GRADE POINT</th>
+                  <th>CREDIT POINT</th>
+                </tr>
+              )}
             </thead>
             <tbody>
               {marksheetData ? (
@@ -693,20 +767,61 @@ export default function GradeSheet({ user }) {
                       <tr key={index}>
                         <td>{course.subjectName}</td>
                         <td>{displayCourseType}</td>
-                        <td>{course.credit}</td>
-                        <td>{course.grade}</td>
-                        <td>{course.gradePoint}</td>
-                        <td>{course.creditPoint}</td>
+                        {isPGLayout ? (
+                          <>
+                            {(() => {
+                              const m = getPGRowMarks(course);
+                              return (
+                                <>
+                                  <td>{m.midFm}</td>
+                                  <td>{m.midMs}</td>
+                                  <td>{m.endFm}</td>
+                                  <td>{m.endMs}</td>
+                                  <td>{m.totalFm}</td>
+                                  <td><strong>{m.totalMs}</strong></td>
+                                </>
+                              );
+                            })()}
+                            <td>{course.credit}</td>
+                            <td>{course.grade}</td>
+                            <td>{course.gradePoint}</td>
+                            <td>{course.creditPoint}</td>
+                          </>
+                        ) : (
+                          <>
+                            <td>{course.credit}</td>
+                            <td>{course.grade}</td>
+                            <td>{course.gradePoint}</td>
+                            <td>{course.creditPoint}</td>
+                          </>
+                        )}
                       </tr>
                     );
                   });
                   })()}
                   <tr className="total-row">
                     <td colSpan={2} className="total-label">TOTAL</td>
-                    <td>{marksheetData.totalCredits}</td>
-                    <td></td>
-                    <td>{marksheetData.totalGradePoints ?? ''}</td>
-                    <td>{marksheetData.totalCreditPoints}</td>
+                    {isPGLayout ? (
+                      <>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>{marksheetData.totalCredits}</td>
+                        <td></td>
+                        <td>{marksheetData.totalGradePoints ?? ''}</td>
+                        <td>{marksheetData.totalCreditPoints}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{marksheetData.totalCredits}</td>
+                        <td></td>
+                        <td>{marksheetData.totalGradePoints ?? ''}</td>
+                        <td>{marksheetData.totalCreditPoints}</td>
+                      </>
+                    )}
                   </tr>
                 </>
               ) : (
@@ -733,6 +848,8 @@ export default function GradeSheet({ user }) {
               )}
             </tbody>
           </table>
+            );
+          })()}
         </div>
 
         {/* Result and SGPA Section */}
