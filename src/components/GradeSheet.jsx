@@ -57,29 +57,50 @@ export default function GradeSheet({ user }) {
     const practical = toNum(course?.practical);
     const total = toNum(course?.marks);
 
-    const isPracticalOnly =
-      (mid === null || mid === 0) &&
-      (end === null || end === 0) &&
-      practical !== null &&
-      practical > 0;
+    const subjectNameRaw = course?.subjectName != null ? String(course.subjectName).trim() : '';
+    const subjectNameUpper = subjectNameRaw.toUpperCase();
+    const forcePracticalOnlyDisplay =
+      subjectNameUpper === 'ICP-II' || subjectNameUpper === 'OCP-II';
 
-    if (isPracticalOnly) {
+    // Some PG exports encode practical-only papers as midsem=<practical marks>, endsem=null, practical=null.
+    const inferredPracticalOnly =
+      (practical === null || practical === 0) &&
+      (end === null || end === 0) &&
+      mid !== null &&
+      mid > 0;
+
+    // Chemistry practicals sometimes store the practical marks in END SEM (e.g., ICP-II/OCP-II with endsem=48/46).
+    const chemistryPracticalMarks =
+      forcePracticalOnlyDisplay && (end ?? practical ?? mid ?? total) !== null
+        ? (end ?? practical ?? mid ?? total)
+        : null;
+
+    const practicalMarks =
+      chemistryPracticalMarks ??
+      (practical !== null && practical > 0 ? practical : inferredPracticalOnly ? mid : null);
+
+    const hasPractical = practicalMarks !== null && practicalMarks > 0;
+
+    // Rule:
+    // - If subject has practical -> no MID SEM; practical full mark 50 (shown under END SEM / TOTAL)
+    // - If subject has no practical -> MID FM 30 and END FM 70 (TOTAL FM 100)
+    if (hasPractical) {
       return {
         midFm: '',
         midMs: '',
         endFm: 50,
-        endMs: practical,
+        endMs: practicalMarks ?? '',
         totalFm: 50,
-        totalMs: total ?? practical,
+        totalMs: total ?? practicalMarks ?? '',
       };
     }
 
     return {
-      midFm: 20,
+      midFm: 30,
       midMs: mid ?? '',
-      endFm: 50,
+      endFm: 70,
       endMs: end ?? '',
-      totalFm: 70,
+      totalFm: 100,
       totalMs: total ?? '',
     };
   };
