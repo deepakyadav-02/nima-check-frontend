@@ -123,6 +123,37 @@ export default function GradeSheet({ user }) {
     };
   };
 
+  const sumPGTotals = (courses) => {
+    const totals = {
+      midFm: 0,
+      midMs: 0,
+      endFm: 0,
+      endMs: 0,
+      totalFm: 0,
+      totalMs: 0,
+    };
+    if (!Array.isArray(courses)) return totals;
+
+    for (const c of courses) {
+      const m = getPGRowMarks(c);
+      const midFm = toNum(m.midFm) ?? 0;
+      const midMs = toNum(m.midMs) ?? 0;
+      const endFm = toNum(m.endFm) ?? 0;
+      const endMs = toNum(m.endMs) ?? 0;
+      const totalFm = toNum(m.totalFm) ?? 0;
+      const totalMs = toNum(m.totalMs) ?? 0;
+
+      totals.midFm += midFm;
+      totals.midMs += midMs;
+      totals.endFm += endFm;
+      totals.endMs += endMs;
+      totals.totalFm += totalFm;
+      totals.totalMs += totalMs;
+    }
+
+    return totals;
+  };
+
   const buildSecondSemMarksheetData = (secondSemRow) => {
     const isBBA =
       String(secondSemRow?.Department || '').toUpperCase().includes('BBA') ||
@@ -857,12 +888,19 @@ export default function GradeSheet({ user }) {
                     <td colSpan={2} className="total-label">TOTAL</td>
                     {isPGLayout ? (
                       <>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        {(() => {
+                          const t = sumPGTotals(marksheetData?.courses || []);
+                          return (
+                            <>
+                              <td><strong>{t.midFm}</strong></td>
+                              <td><strong>{t.midMs}</strong></td>
+                              <td><strong>{t.endFm}</strong></td>
+                              <td><strong>{t.endMs}</strong></td>
+                              <td><strong>{t.totalFm}</strong></td>
+                              <td><strong>{t.totalMs}</strong></td>
+                            </>
+                          );
+                        })()}
                         <td>{marksheetData.totalCredits}</td>
                         <td></td>
                         <td>{marksheetData.totalGradePoints ?? ''}</td>
