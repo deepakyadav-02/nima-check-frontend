@@ -95,6 +95,24 @@ export default function GradeSheet({ user }) {
       };
     }
 
+    const isChemistry = (() => {
+      const deptRaw = data?.studentInfo?.course ?? '';
+      const dept = typeof deptRaw === 'string' ? deptRaw : String(deptRaw ?? '');
+      return dept.trim() !== '' && dept.toUpperCase().includes('CHEM');
+    })();
+
+    // Chemistry theory papers use a 70-mark scheme: Mid 20 + End 50 = Total 70.
+    if (isChemistry) {
+      return {
+        midFm: 20,
+        midMs: mid ?? '',
+        endFm: 50,
+        endMs: end ?? '',
+        totalFm: 70,
+        totalMs: total ?? '',
+      };
+    }
+
     return {
       midFm: 30,
       midMs: mid ?? '',
@@ -297,6 +315,17 @@ export default function GradeSheet({ user }) {
       .join(' ');
   };
 
+  const detectMediumOfExam = (departmentOrCourse) => {
+    const raw = departmentOrCourse == null ? '' : String(departmentOrCourse).trim();
+    const u = raw.toUpperCase();
+    if (!u) return 'ENGLISH';
+    if (u.includes('ODIA')) return 'ODIA';
+    if (u.includes('CHEM') || u.includes('GEO') || u.includes('MATH') || u.includes('COMMERCE')) {
+      return 'ENGLISH';
+    }
+    return 'ENGLISH';
+  };
+
   const fetchStudentData = async () => {
     try {
       setLoading(true);
@@ -320,6 +349,7 @@ export default function GradeSheet({ user }) {
           setMarksheetData(buildPGSecondSemMarksheetData(pgSecondSem2024));
 
           const courseName = formatCourseName(pgSecondSem2024.department || pgSecondSem2024.course);
+          const detectedLanguage = detectMediumOfExam(courseName || pgSecondSem2024.department || pgSecondSem2024.course);
 
           setData((prevData) => ({
             ...prevData,
@@ -329,6 +359,7 @@ export default function GradeSheet({ user }) {
               examRollNo: pgSecondSem2024.collegeRollNo || prevData.studentInfo.examRollNo,
               registrationNo:
                 pgSecondSem2024.autonomousRollNo || prevData.studentInfo.registrationNo,
+              mediumOfExam: detectedLanguage || prevData.studentInfo.mediumOfExam,
               course: courseName ? `MASTER OF SCIENCE IN ${courseName.toUpperCase()}` : prevData.studentInfo.course,
               coreTwo: '',
             },
@@ -360,7 +391,9 @@ export default function GradeSheet({ user }) {
             ? secondSemRow?.['AEC-201']?.Subject || ''
             : secondSemRow?.['AEC-2']?.Subject || '';
           const detectedLanguage =
-            String(aecSubject).toLowerCase().includes('odia') ? 'ODIA' : (aecSubject ? String(aecSubject).toUpperCase() : 'ENGLISH');
+            String(aecSubject).toLowerCase().includes('odia')
+              ? 'ODIA'
+              : detectMediumOfExam(apiStudentInfo.department);
 
           setData(prevData => ({
             ...prevData,
@@ -671,7 +704,7 @@ export default function GradeSheet({ user }) {
             <h2 className="document-type">MARK SHEET CUM GRADE SHEET</h2>
             <p className="document-subtitle">
               {selectedSem === '2'
-                ? `SECOND-SEMESTER(ADMISSION-BATCH${selectedYear})`
+                ? `SECOND-SEMESTER EXAMINATION(ADMISSION-BATCH${selectedYear})`
                 : `FIRST-SEMESTER(ADMISSION-BATCH${selectedYear})`}
             </p>
           </div>

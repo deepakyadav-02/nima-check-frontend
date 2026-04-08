@@ -238,6 +238,10 @@ export default function Marksheet({ user }) {
   const pgCourseLine = departmentName
     ? `MASTER OF SCIENCE IN ${String(departmentName).toUpperCase()}`
     : 'MASTER OF SCIENCE';
+  const isChemistry =
+    typeof departmentName === 'string' &&
+    departmentName.trim() !== '' &&
+    departmentName.toUpperCase().includes('CHEM');
 
   const getMid = (course) => course?.midsem ?? course?.internal ?? '-';
   const getEnd = (course) => course?.endsem ?? course?.theory ?? '-';
@@ -290,6 +294,18 @@ export default function Marksheet({ user }) {
         endMs: practicalMarks ?? '',
         totalFm: 50,
         totalMs: total ?? practicalMarks ?? '',
+      };
+    }
+
+    // Chemistry theory papers use a 70-mark scheme: Mid 20 + End 50 = Total 70.
+    if (isChemistry) {
+      return {
+        midFm: 20,
+        midMs: mid ?? '',
+        endFm: 50,
+        endMs: end ?? '',
+        totalFm: 70,
+        totalMs: total ?? '',
       };
     }
 
