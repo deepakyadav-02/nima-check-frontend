@@ -839,11 +839,19 @@ export default function GradeSheet({ user }) {
 
                     if (normalizedType.startsWith('major')) {
                         majorCount += 1;
-                        displayCourseType = `CORE-1 MAJOR-${majorCount}`;
+                        // UG 2nd sem should show Major-3 and Major-4
+                        if (selectedSem === '2') {
+                          displayCourseType = `CORE-1 MAJOR-${majorCount + 2}`;
+                        } else {
+                          displayCourseType = `CORE-1 MAJOR-${majorCount}`;
+                        }
                     } else if (normalizedType.startsWith('minor')) {
-                        displayCourseType = 'CORE-2 Minor-1';
+                        // UG 2nd sem should show Minor-2
+                        displayCourseType = selectedSem === '2' ? 'CORE-2 MINOR-2' : 'CORE-2 MINOR-1';
+                    } else if (normalizedType.includes('mdc')) {
+                        displayCourseType = selectedSem === '2' ? 'MDC-2' : 'MDC-1';
                     } else if (normalizedType.includes('aec')) {
-                        displayCourseType = 'AEC-1';
+                        displayCourseType = selectedSem === '2' ? 'AEC-2' : 'AEC-1';
                     } else if (normalizedType.includes('vac')) {
                         displayCourseType = 'VAC-1';
                     }
