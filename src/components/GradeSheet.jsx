@@ -469,21 +469,14 @@ export default function GradeSheet({ user }) {
           classification: sem1Marksheet.classification || 'N/A'
         });
         
-        // Determine language based on first two courses
-        let language = 'ENGLISH';
-        if (sem1Marksheet.courses && sem1Marksheet.courses.length > 0) {
-          // Check first two courses for ODIA
-          const firstTwoCourses = sem1Marksheet.courses.slice(0, 2);
-          const hasOdiaCourse = firstTwoCourses.some(course => 
-            course.subjectName && course.subjectName.toLowerCase().includes('odia')
-          );
-          if (hasOdiaCourse) {
-            language = 'ODIA';
-          }
-        }
-        
         const deptFromApi = formatCourseName(apiStudentInfo?.department);
         const looksPG = detectIsPGMarksheetLayout(sem1Marksheet?.courses || []);
+
+        // PG 1st sem medium of exam is department-based:
+        // - ODIA dept => ODIA
+        // - MATH/CHEMISTRY/COMMERCE/GEOLOGY => ENGLISH
+        // (default ENGLISH)
+        const language = looksPG ? detectMediumOfExam(deptFromApi || apiStudentInfo?.department) : 'ENGLISH';
         const courseInfo = looksPG
           ? deptFromApi
             ? `MASTER OF SCIENCE IN ${deptFromApi.toUpperCase()}`
