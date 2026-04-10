@@ -51,6 +51,8 @@ export default function GradeSheet({ user }) {
     return courses.some(isPGLikeCourseRow);
   };
 
+  const isPGUser = String(user?.studentType || '').toUpperCase() === 'PG';
+
   const getPGRowMarks = (course) => {
     const mid = toNum(course?.midsem ?? course?.internal);
     const end = toNum(course?.endsem ?? course?.theory);
@@ -725,7 +727,7 @@ export default function GradeSheet({ user }) {
           <img src="/college.png" alt="College Logo" className="college-logo" />
           <div className="document-header-text">
             <h1 className="exam-title">NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h1>
-            <h2 className="document-type">MARK SHEET CUM GRADE SHEET</h2>
+            <h2 className="document-type">{isPGUser ? 'MARK SHEET CUM GRADE SHEET' : 'GRADE SHEET'}</h2>
             <p className="document-subtitle">
               {selectedSem === '2'
                 ? `SECOND-SEMESTER EXAMINATION(ADMISSION-BATCH${selectedYear})`

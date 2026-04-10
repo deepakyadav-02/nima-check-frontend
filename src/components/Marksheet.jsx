@@ -396,7 +396,7 @@ export default function Marksheet({ user }) {
               </div>
               <div className="college-info">
                 <h1>NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h1>
-                <h2>{isPG ? 'MARK SHEET CUM GRADE SHEET' : 'EXAMINATION MARKSHEET'}</h2>
+                <h2>{isPG ? 'MARK SHEET CUM GRADE SHEET' : 'GRADE SHEET'}</h2>
                 <h3>SEMESTER - {selectedSemester.semester} (BATCH - 2024)</h3>
                 <p className="college-address">At/Po: Nimapara, Dist: Puri, Odisha - 752106</p>
               </div>
