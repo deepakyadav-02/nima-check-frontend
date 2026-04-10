@@ -470,16 +470,9 @@ export default function Marksheet({ user }) {
                         <th rowSpan="2">Subject Name</th>
                         <th rowSpan="2">Course Type</th>
                         <th rowSpan="2">Credit</th>
-                        <th colSpan="3">Marks Obtained</th>
-                        <th rowSpan="2">Total</th>
                         <th rowSpan="2">Grade</th>
                         <th rowSpan="2">GP</th>
                         <th rowSpan="2">CP</th>
-                      </tr>
-                      <tr>
-                        <th>Theory</th>
-                        <th>Internal</th>
-                        <th>Practical</th>
                       </tr>
                     </>
                   )}
@@ -515,10 +508,6 @@ export default function Marksheet({ user }) {
                         <>
                           <td>{course.courseType}</td>
                           <td>{course.credit}</td>
-                          <td>{course.theory || '-'}</td>
-                          <td>{course.internal || '-'}</td>
-                          <td>{course.practical || '-'}</td>
-                          <td><strong>{course.marks}</strong></td>
                           <td className="grade-cell">
                             <strong>{course.grade}</strong>
                           </td>

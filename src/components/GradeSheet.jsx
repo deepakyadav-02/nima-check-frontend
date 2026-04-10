@@ -783,7 +783,8 @@ export default function GradeSheet({ user }) {
         {/* Grade Details Table */}
         <div className="grade-table-container">
           {(() => {
-            const isPGLayout = detectIsPGMarksheetLayout(marksheetData?.courses || []);
+            // UG should show grade-only table; PG shows marks+grade table
+            const isPGLayout = isPGUser;
             const tableClass = `grade-table${isPGLayout ? ' pg-marksheet-table' : ''}`;
             return (
           <table className={tableClass}>
