@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import './Marksheet.css';
 import { fetchMarksheetsByRollNo } from '../services/marksheetService';
+import { normalizeDeptKey, getPGRowMarks, sumPGTotals } from '../utils/marksheetUtils';
 
 export default function Marksheet({ user }) {
   const [marksheets, setMarksheets] = useState([]);
@@ -238,118 +239,11 @@ export default function Marksheet({ user }) {
   const pgCourseLine = departmentName
     ? `MASTER OF SCIENCE IN ${String(departmentName).toUpperCase()}`
     : 'MASTER OF SCIENCE';
-  const isChemistry =
-    typeof departmentName === 'string' &&
-    departmentName.trim() !== '' &&
-    departmentName.toUpperCase().includes('CHEM');
 
   const getMid = (course) => course?.midsem ?? course?.internal ?? '-';
   const getEnd = (course) => course?.endsem ?? course?.theory ?? '-';
   const getPractical = (course) => course?.practical ?? '-';
-
-  const toNum = (v) => {
-    if (v === null || v === undefined) return null;
-    const n = Number(String(v).trim());
-    return Number.isFinite(n) ? n : null;
-  };
-
-  const sumPGTotals = (courses) => {
-    const totals = {
-      midFm: 0,
-      midMs: 0,
-      endFm: 0,
-      endMs: 0,
-      totalFm: 0,
-      totalMs: 0,
-    };
-
-    if (!Array.isArray(courses)) return totals;
-
-    for (const c of courses) {
-      const m = getPGRowMarks(c);
-      const midFm = toNum(m.midFm) ?? 0;
-      const midMs = toNum(m.midMs) ?? 0;
-      const endFm = toNum(m.endFm) ?? 0;
-      const endMs = toNum(m.endMs) ?? 0;
-      const totalFm = toNum(m.totalFm) ?? 0;
-      const totalMs = toNum(m.totalMs) ?? 0;
-
-      totals.midFm += midFm;
-      totals.midMs += midMs;
-      totals.endFm += endFm;
-      totals.endMs += endMs;
-      totals.totalFm += totalFm;
-      totals.totalMs += totalMs;
-    }
-
-    return totals;
-  };
-
-  const getPGRowMarks = (course) => {
-    const mid = toNum(course?.midsem ?? course?.internal);
-    const end = toNum(course?.endsem ?? course?.theory);
-    const practical = toNum(course?.practical);
-    const total = toNum(course?.marks);
-
-    const subjectNameRaw = course?.subjectName != null ? String(course.subjectName).trim() : '';
-    const subjectNameUpper = subjectNameRaw.toUpperCase();
-    const forcePracticalOnlyDisplay =
-      subjectNameUpper === 'ICP-II' || subjectNameUpper === 'OCP-II';
-
-    // Some PG exports encode practical-only papers as midsem=<practical marks>, endsem=null, practical=null.
-    const inferredPracticalOnly =
-      (practical === null || practical === 0) &&
-      (end === null || end === 0) &&
-      mid !== null &&
-      mid > 0;
-
-    // Chemistry practicals sometimes store the practical marks in END SEM (e.g., ICP-II/OCP-II with endsem=48/46).
-    const chemistryPracticalMarks =
-      forcePracticalOnlyDisplay && (end ?? practical ?? mid ?? total) !== null
-        ? (end ?? practical ?? mid ?? total)
-        : null;
-
-    const practicalMarks =
-      chemistryPracticalMarks ??
-      (practical !== null && practical > 0 ? practical : inferredPracticalOnly ? mid : null);
-
-    const hasPractical = practicalMarks !== null && practicalMarks > 0;
-
-    // Rule:
-    // - If subject has practical -> no MID SEM; practical full mark 50 (shown under END SEM / TOTAL)
-    // - If subject has no practical -> MID FM 30 and END FM 70 (TOTAL FM 100)
-    if (hasPractical) {
-      return {
-        midFm: '',
-        midMs: '',
-        endFm: 50,
-        endMs: practicalMarks ?? '',
-        totalFm: 50,
-        totalMs: total ?? practicalMarks ?? '',
-      };
-    }
-
-    // Chemistry theory papers use a 70-mark scheme: Mid 20 + End 50 = Total 70.
-    if (isChemistry) {
-      return {
-        midFm: 20,
-        midMs: mid ?? '',
-        endFm: 50,
-        endMs: end ?? '',
-        totalFm: 70,
-        totalMs: total ?? '',
-      };
-    }
-
-    return {
-      midFm: 30,
-      midMs: mid ?? '',
-      endFm: 70,
-      endMs: end ?? '',
-      totalFm: 100,
-      totalMs: total ?? '',
-    };
-  };
+  const deptKey = normalizeDeptKey(departmentName);
 
   return (
     <div className="marksheet-container">
@@ -485,7 +379,7 @@ export default function Marksheet({ user }) {
                       {isPG ? (
                         <>
                           {(() => {
-                            const m = getPGRowMarks(course);
+                            const m = getPGRowMarks(course, deptKey);
                             return (
                               <>
                                 <td>{m.midFm}</td>
@@ -521,7 +415,7 @@ export default function Marksheet({ user }) {
                     <tr className="total-row">
                       <td colSpan="2"><strong>TOTAL</strong></td>
                       {(() => {
-                        const t = sumPGTotals(selectedSemester.courses);
+                        const t = sumPGTotals(selectedSemester.courses, deptKey);
                         return (
                           <>
                             <td><strong>{t.midFm}</strong></td>
