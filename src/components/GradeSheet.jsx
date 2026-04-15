@@ -259,6 +259,7 @@ export default function GradeSheet({ user }) {
     const raw = departmentOrCourse == null ? '' : String(departmentOrCourse).trim();
     const u = raw.toUpperCase();
     if (!u) return '';
+    if (u.includes('ODIA')) return 'MASTER OF ARTS IN ODIA';
     if (u.includes('COMMERCE')) return 'MASTER IN COMMERCE';
     return `MASTER OF SCIENCE IN ${u}`;
   };

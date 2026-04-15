@@ -237,11 +237,13 @@ export default function Marksheet({ user }) {
     selectedSemester?.student?.Course ||
     '';
   const departmentUpper = String(departmentName || '').toUpperCase();
-  const pgCourseLine = departmentUpper.includes('COMMERCE')
-    ? 'MASTER IN COMMERCE'
-    : departmentUpper
-      ? `MASTER OF SCIENCE IN ${departmentUpper}`
-      : 'MASTER OF SCIENCE';
+  const pgCourseLine = departmentUpper.includes('ODIA')
+    ? 'MASTER OF ARTS IN ODIA'
+    : departmentUpper.includes('COMMERCE')
+      ? 'MASTER IN COMMERCE'
+      : departmentUpper
+        ? `MASTER OF SCIENCE IN ${departmentUpper}`
+        : 'MASTER OF SCIENCE';
 
   const getMid = (course) => course?.midsem ?? course?.internal ?? '-';
   const getEnd = (course) => course?.endsem ?? course?.theory ?? '-';
