@@ -255,6 +255,14 @@ export default function GradeSheet({ user }) {
     return 'ENGLISH';
   };
 
+  const buildPGCourseLine = (departmentOrCourse) => {
+    const raw = departmentOrCourse == null ? '' : String(departmentOrCourse).trim();
+    const u = raw.toUpperCase();
+    if (!u) return '';
+    if (u.includes('COMMERCE')) return 'MASTER IN COMMERCE';
+    return `MASTER OF SCIENCE IN ${u}`;
+  };
+
   const fetchStudentData = async () => {
     try {
       setLoading(true);
@@ -289,7 +297,7 @@ export default function GradeSheet({ user }) {
               registrationNo:
                 pgSecondSem2024.autonomousRollNo || prevData.studentInfo.registrationNo,
               mediumOfExam: detectedLanguage || prevData.studentInfo.mediumOfExam,
-              course: courseName ? `MASTER OF SCIENCE IN ${courseName.toUpperCase()}` : prevData.studentInfo.course,
+              course: courseName ? buildPGCourseLine(courseName) : prevData.studentInfo.course,
               coreTwo: '',
             },
           }));
@@ -377,7 +385,7 @@ export default function GradeSheet({ user }) {
         const language = looksPG ? detectMediumOfExam(deptFromApi || apiStudentInfo?.department) : 'ENGLISH';
         const courseInfo = looksPG
           ? deptFromApi
-            ? `MASTER OF SCIENCE IN ${deptFromApi.toUpperCase()}`
+            ? buildPGCourseLine(deptFromApi)
             : data.studentInfo.course
           : data.studentInfo.course;
 
