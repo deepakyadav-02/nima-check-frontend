@@ -6,6 +6,8 @@ import AdmitCard from './components/AdmitCard';
 import Profile from './components/Profile';
 import Marksheet from './components/Marksheet';
 import GradeSheet from './components/GradeSheet';
+import FinalGradeSheet from './components/FinalGradeSheet';
+import GradeSheetQRVerify from './components/GradeSheetQRVerify';
 import './App.css';
 
 function App() {
@@ -109,6 +111,18 @@ function App() {
                 <GradeSheet user={user} /> : 
                 <Navigate to="/login" replace />
               } 
+            />
+            <Route 
+              path="/final-grade-sheet" 
+              element={
+                isAuthenticated ? 
+                <FinalGradeSheet user={user} /> : 
+                <Navigate to="/login" replace />
+              } 
+            />
+            <Route
+              path="/verify/grade-sheet/:studentId"
+              element={<GradeSheetQRVerify />}
             />
           </Routes>
         </main>

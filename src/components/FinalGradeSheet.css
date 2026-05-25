@@ -1,0 +1,679 @@
+/* Final Grade Sheet */
+
+.fgs-wrapper {
+  background: #d0d0d0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 24px 24px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.fgs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 16px;
+}
+
+.fgs-back-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #fff;
+  color: #000;
+}
+
+.fgs-back-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.fgs-back-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fgs-download-pdf-btn {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.fgs-download-pdf-btn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.fgs-download-pdf-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.fgs-sheet {
+  background: #ffffff;
+  width: 860px;
+  padding: 14px 18px;
+  border: 2px solid #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Header */
+.fgs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #333;
+  margin-bottom: 8px;
+}
+
+.fgs-logo {
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #bbb;
+  flex-shrink: 0;
+}
+
+.fgs-header-text {
+  text-align: center;
+  flex: 1;
+  padding: 0 10px;
+}
+
+.fgs-college-name {
+  font-size: 19px;
+  font-weight: 900;
+  color: #1a1a6e;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.fgs-affiliation {
+  font-size: 11.5px;
+  color: #333;
+  margin: 2px 0;
+}
+
+.fgs-exam-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #8b0000;
+  letter-spacing: 0.4px;
+  margin: 3px 0;
+  text-transform: uppercase;
+}
+
+.fgs-exam-type {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1a1a6e;
+  text-transform: uppercase;
+}
+
+.fgs-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.fgs-qr-placeholder {
+  width: 66px;
+  height: 66px;
+  border: 2px dashed #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #bbb;
+}
+
+.fgs-qr-placeholder--empty {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+}
+
+.fgs-qr-code {
+  width: 66px;
+  height: 66px;
+  padding: 2px;
+  background: #fff;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fgs-qr-code svg {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.fgs-sl-no {
+  font-size: 9px;
+  color: #555;
+  margin-top: 3px;
+  text-align: center;
+}
+
+/* Student info */
+.fgs-student-info {
+  border: 1.5px solid #333;
+  padding: 5px 10px;
+  margin-bottom: 8px;
+}
+
+.fgs-student-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  margin: 2px 0;
+  flex-wrap: wrap;
+}
+
+.fgs-label {
+  font-weight: 700;
+  color: #222;
+  white-space: nowrap;
+}
+
+.fgs-label-spacer {
+  margin-left: auto;
+}
+
+.fgs-value {
+  color: #111;
+  white-space: nowrap;
+  margin-right: 10px;
+}
+
+.fgs-value-bold {
+  color: #111;
+  white-space: nowrap;
+  margin-right: 10px;
+  font-weight: 700;
+}
+
+/* Semester */
+.fgs-semester-section {
+  margin-bottom: 6px;
+  border: 1.5px solid #333;
+}
+
+.fgs-semester-header {
+  background: #c5d8f0;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1a1a1a;
+  padding: 4px 8px;
+  border-bottom: 1px solid #333;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Table */
+.fgs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.fgs-th {
+  border: 1px solid #555;
+  padding: 4px 3px;
+  text-align: center;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 10.5px;
+  white-space: nowrap;
+  background: #d5e4f5;
+}
+
+.fgs-td {
+  border: 1px solid #999;
+  padding: 3px 4px;
+  font-size: 10.5px;
+  color: #1a1a1a;
+}
+
+.fgs-td-center {
+  border: 1px solid #999;
+  padding: 3px 4px;
+  font-size: 10.5px;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.fgs-td-bold {
+  border: 1px solid #999;
+  padding: 3px 4px;
+  font-size: 10.5px;
+  color: #1a1a1a;
+  text-align: center;
+  font-weight: 700;
+}
+
+.fgs-td-title {
+  border: 1px solid #999;
+  padding: 3px 6px;
+  font-size: 10.5px;
+  color: #1a1a1a;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.fgs-td-total-left {
+  border: 1px solid #999;
+  padding: 3px 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: #eef3fb;
+}
+
+.fgs-td-total {
+  border: 1px solid #999;
+  padding: 3px 4px;
+  font-size: 10.5px;
+  text-align: center;
+  font-weight: 700;
+  background: #eef3fb;
+}
+
+.fgs-td-total-empty {
+  border: 1px solid #999;
+  padding: 3px 4px;
+  font-size: 10.5px;
+  background: #eef3fb;
+}
+
+/* Column widths */
+.fgs-col-papers {
+  width: 76px;
+}
+
+.fgs-col-fullmark {
+  width: 62px;
+}
+
+.fgs-col-mid {
+  width: 50px;
+}
+
+.fgs-col-end {
+  width: 50px;
+}
+
+.fgs-col-tot {
+  width: 40px;
+}
+
+.fgs-col-cr {
+  width: 28px;
+}
+
+.fgs-col-gr {
+  width: 32px;
+}
+
+.fgs-col-gp {
+  width: 28px;
+}
+
+.fgs-col-cp {
+  width: 34px;
+}
+
+.fgs-sgpa-row {
+  text-align: right;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1a1a1a;
+  padding: 3px 10px;
+  background: #f4f7ff;
+  border-top: 1px solid #aaa;
+}
+
+/* Summary */
+.fgs-summary-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1.5px solid #333;
+}
+
+.fgs-summary-left {
+  flex: 1;
+}
+
+.fgs-summary-right {
+  flex: 1;
+  text-align: right;
+}
+
+.fgs-summary-row {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  gap: 10px;
+}
+
+.fgs-summary-row-spaced {
+  margin-top: 6px;
+}
+
+.fgs-summary-label {
+  font-size: 13px;
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.fgs-summary-label-gap {
+  margin-left: 20px;
+}
+
+.fgs-cgpa-label {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.fgs-pub-date {
+  font-size: 11px;
+  color: #333;
+  margin-bottom: 14px;
+}
+
+.fgs-sign-block {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.fgs-sign-block-right {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.fgs-sign-placeholder {
+  width: 90px;
+  height: 38px;
+  border-bottom: 1.5px solid #333;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: 10px;
+  color: #ccc;
+  padding-bottom: 2px;
+}
+
+.fgs-sign-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-top: 2px;
+}
+
+.fgs-sign-label-red {
+  font-size: 12px;
+  font-weight: 800;
+  color: #8b0000;
+  margin-top: 2px;
+}
+
+/* PDF export — compact layout so full sheet fits one A4 page */
+.fgs-pdf-compact {
+  width: 794px !important;
+  max-width: 794px !important;
+  padding: 6px 8px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  border-width: 1px;
+  overflow: visible !important;
+  box-sizing: border-box;
+}
+
+.fgs-pdf-compact,
+.fgs-pdf-compact * {
+  box-sizing: border-box;
+}
+
+.fgs-pdf-compact .fgs-header {
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  min-width: 0;
+}
+
+.fgs-pdf-compact .fgs-header-text {
+  min-width: 0;
+  overflow: visible;
+}
+
+.fgs-pdf-compact .fgs-logo {
+  width: 52px;
+  height: 52px;
+}
+
+.fgs-pdf-compact .fgs-college-name {
+  font-size: 11px;
+  letter-spacing: 0.1px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.fgs-pdf-compact .fgs-affiliation {
+  font-size: 8px;
+  margin: 1px 0;
+}
+
+.fgs-pdf-compact .fgs-exam-title {
+  font-size: 10px;
+  margin: 2px 0;
+}
+
+.fgs-pdf-compact .fgs-exam-type {
+  font-size: 8px;
+}
+
+.fgs-pdf-compact .fgs-qr-code,
+.fgs-pdf-compact .fgs-qr-placeholder {
+  width: 44px;
+  height: 44px;
+  padding: 1px;
+}
+
+.fgs-pdf-compact .fgs-sl-no {
+  font-size: 7px;
+  margin-top: 2px;
+}
+
+.fgs-pdf-compact .fgs-student-info {
+  padding: 3px 6px;
+  margin-bottom: 4px;
+}
+
+.fgs-pdf-compact .fgs-student-row {
+  font-size: 8px;
+  margin: 1px 0;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.fgs-pdf-compact .fgs-label,
+.fgs-pdf-compact .fgs-value-bold {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.fgs-pdf-compact .fgs-semester-section {
+  margin-bottom: 3px;
+  overflow: visible;
+}
+
+.fgs-pdf-compact .fgs-semester-header {
+  font-size: 7.5px;
+  padding: 2px 4px;
+}
+
+.fgs-pdf-compact .fgs-table {
+  font-size: 7px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.fgs-pdf-compact .fgs-th {
+  padding: 2px 1px;
+  font-size: 6.5px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: visible;
+}
+
+.fgs-pdf-compact .fgs-td,
+.fgs-pdf-compact .fgs-td-center,
+.fgs-pdf-compact .fgs-td-bold,
+.fgs-pdf-compact .fgs-td-title,
+.fgs-pdf-compact .fgs-td-total-left,
+.fgs-pdf-compact .fgs-td-total,
+.fgs-pdf-compact .fgs-td-total-empty {
+  padding: 1px 2px;
+  font-size: 6.5px;
+  line-height: 1.15;
+}
+
+.fgs-pdf-compact .fgs-td-title {
+  font-size: 6px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: visible;
+}
+
+.fgs-pdf-compact .fgs-td,
+.fgs-pdf-compact .fgs-td-center,
+.fgs-pdf-compact .fgs-td-bold,
+.fgs-pdf-compact .fgs-td-total-left,
+.fgs-pdf-compact .fgs-td-total,
+.fgs-pdf-compact .fgs-td-total-empty {
+  overflow: visible;
+  max-width: 100%;
+}
+
+.fgs-pdf-compact .fgs-col-papers {
+  width: 9%;
+}
+
+.fgs-pdf-compact .fgs-col-fullmark {
+  width: 8%;
+}
+
+.fgs-pdf-compact .fgs-col-mid,
+.fgs-pdf-compact .fgs-col-end {
+  width: 7%;
+}
+
+.fgs-pdf-compact .fgs-col-tot {
+  width: 6%;
+}
+
+.fgs-pdf-compact .fgs-col-cr,
+.fgs-pdf-compact .fgs-col-gp {
+  width: 5%;
+}
+
+.fgs-pdf-compact .fgs-col-gr {
+  width: 5%;
+}
+
+.fgs-pdf-compact .fgs-col-cp {
+  width: 6%;
+}
+
+.fgs-pdf-compact .fgs-sgpa-row {
+  font-size: 7px;
+  padding: 2px 6px;
+}
+
+.fgs-pdf-compact .fgs-summary-section {
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.fgs-pdf-compact .fgs-summary-row {
+  font-size: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fgs-pdf-compact .fgs-summary-label {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.fgs-pdf-compact .fgs-summary-label-gap {
+  margin-left: 12px;
+}
+
+.fgs-pdf-compact .fgs-summary-row-spaced {
+  margin-top: 3px;
+}
+
+.fgs-pdf-compact .fgs-summary-label,
+.fgs-pdf-compact .fgs-cgpa-label {
+  font-size: 8px;
+}
+
+.fgs-pdf-compact .fgs-pub-date {
+  font-size: 7px;
+  margin-bottom: 6px;
+}
+
+.fgs-pdf-compact .fgs-sign-block,
+.fgs-pdf-compact .fgs-sign-block-right {
+  margin-top: 6px;
+}
+
+.fgs-pdf-compact .fgs-sign-placeholder {
+  width: 56px;
+  height: 24px;
+}
+
+.fgs-pdf-compact .fgs-sign-label {
+  font-size: 7px;
+}
+
+.fgs-pdf-compact .fgs-sign-label-red {
+  font-size: 7.5px;
+}
