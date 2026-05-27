@@ -1,4 +1,4 @@
-/* Final Grade Sheet */
+/* Final Grade Sheet — matches printed A4 mark sheet */
 
 .fgs-status-message {
   max-width: 520px;
@@ -80,83 +80,129 @@
   opacity: 0.85;
 }
 
+/* ============================================================
+ * A4 SHEET — fixed 794px (210mm @ 96dpi) layout that scales
+ * down responsively on screen but ALWAYS renders at full A4
+ * width when generating the PDF (.fgs-sheet--pdf).
+ * ============================================================ */
 .fgs-sheet {
   background: #ffffff;
   width: 794px;
   max-width: 100%;
-  padding: 12px 14px;
+  padding: 14px 18px 16px;
   border: 2px solid #2c2c2c;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
   font-family: 'Segoe UI', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  color: #1a1a1a;
   -webkit-font-smoothing: antialiased;
 }
 
 .fgs-sheet--a4 {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .fgs-sheet--pdf {
+  width: 794px !important;
+  min-width: 794px !important;
+  max-width: 794px !important;
   box-shadow: none !important;
+  transform: none !important;
+  position: relative;
+  background: #ffffff !important;
 }
 
-/* Header */
+.fgs-wrapper--pdf-capturing {
+  overflow: visible !important;
+  padding: 0 !important;
+  background: #ffffff !important;
+  align-items: flex-start !important;
+}
+
+.fgs-wrapper--pdf-capturing .fgs-toolbar {
+  display: none !important;
+}
+
+/* ============================================================
+ * HEADER — logo on the left, then a text column on the right
+ * containing the college name on top, and below it a row that
+ * holds the affiliation/marksheet/post-graduate text on the
+ * left and the QR code on the right.
+ * ============================================================ */
 .fgs-header {
-  display: grid;
-  grid-template-columns: 76px 1fr 68px;
+  display: flex;
   align-items: center;
-  gap: 10px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #2c2c2c;
-  margin-bottom: 0;
+  gap: 16px;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .fgs-logo {
-  width: 72px;
-  height: 72px;
+  width: 135px;
+  height: 135xwpx;
   object-fit: contain;
   display: block;
   flex-shrink: 0;
 }
 
 .fgs-header-text {
-  text-align: center;
   flex: 1;
-  padding: 0 10px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
 }
 
 .fgs-college-name {
-  font-size: 14px;
+  font-size: 24px;
   font-weight: 800;
   color: #1a237e;
-  letter-spacing: 0.35px;
-  line-height: 1.2;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
   text-transform: uppercase;
+  padding-bottom: 3px;
+}
+
+.fgs-header-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fgs-header-info {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
 }
 
 .fgs-affiliation {
-  font-size: 8.5px;
-  color: #444;
-  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight:700;
+  color: #1a237e;
+  margin: 0;
 }
 
 .fgs-exam-title {
-  font-size: 12px;
+  font-size: 17px;
   font-weight: 800;
   color: #8b0000;
-  letter-spacing: 0.4px;
-  margin: 4px 0 0;
+  letter-spacing: 0.5px;
+  margin: 4px auto 0;
   text-transform: uppercase;
+  display: inline-block;
+  padding: 2px 12px;
 }
 
 .fgs-exam-type {
-  font-size: 8.5px;
+  font-size: 13px;
   font-weight: 700;
   color: #1a237e;
   text-transform: uppercase;
-  margin-top: 2px;
+  margin-top: 3px;
+  letter-spacing: 0.4px;
 }
 
 .fgs-header-right {
@@ -167,8 +213,8 @@
 }
 
 .fgs-qr-placeholder {
-  width: 66px;
-  height: 66px;
+  width: 80px;
+  height: 80px;
   border: 2px dashed #aaa;
   display: flex;
   align-items: center;
@@ -184,8 +230,8 @@
 }
 
 .fgs-qr-code {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   padding: 2px;
   background: #fff;
   border: 1px solid #2c2c2c;
@@ -201,31 +247,49 @@
 }
 
 .fgs-sl-no {
-  font-size: 9px;
-  color: #555;
+  font-size: 10px;
+  color: #333;
   margin-top: 3px;
   text-align: center;
 }
 
-/* Student info */
+/* ============================================================
+ * SHARED CONTENT BOX — wraps student info, semester tables AND
+ * the summary/signatures area in a single rounded box with a
+ * light blue background (per design).
+ * ============================================================ */
+.fgs-content-box {
+  background: #dde8f5;
+  border: 1.5px solid #2c2c2c;
+  border-radius: 8px;
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ============================================================
+ * STUDENT INFO — no separate border now; sits inside content-box
+ * ============================================================ */
 .fgs-student-info {
-  border: 1.5px solid #333;
-  padding: 5px 10px;
-  margin-bottom: 8px;
+  border: none;
+  padding: 2px 2px 4px;
+  margin: 0;
+  background: transparent;
 }
 
 .fgs-student-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
+  font-size: 13px;
   margin: 2px 0;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .fgs-label {
   font-weight: 700;
-  color: #222;
+  color: #1a1a1a;
   white-space: nowrap;
 }
 
@@ -236,87 +300,107 @@
 .fgs-value {
   color: #111;
   white-space: nowrap;
-  margin-right: 10px;
+  margin-right: 4px;
 }
 
 .fgs-value-bold {
   color: #111;
   white-space: nowrap;
-  margin-right: 10px;
+  margin-right: 4px;
   font-weight: 700;
 }
 
-/* Semesters — 2 columns, narrower tables */
-.fgs-semesters-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 12px;
-}
-
-.fgs-semester-section {
-  margin-bottom: 0;
+/* ============================================================
+ * SEMESTERS — ONE continuous table containing all semesters.
+ * Each semester is a <tbody> with: title row → headers row →
+ * data rows → TOTAL row (with the SGPA cell in GR+GP columns).
+ * No gaps between semesters; the next semester's title row
+ * follows directly inside the same table.
+ * ============================================================ */
+.fgs-semesters-wrap {
   border: 1.5px solid #2c2c2c;
-  min-width: 0;
   overflow: hidden;
 }
 
-.fgs-semester-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  background: #c5d8f0;
-  font-size: 8px;
-  font-weight: 700;
-  color: #1a1a1a;
-  padding: 5px 8px;
-  border-bottom: 1px solid #2c2c2c;
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
-}
-
-.fgs-semester-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fgs-semester-sgpa {
-  flex-shrink: 0;
-  font-weight: 800;
-}
-
-.fgs-table-wrap {
-  padding: 4px 6px 6px;
-  display: flex;
-  justify-content: center;
-}
-
-/* Table — fixed layout, aligned columns */
-.fgs-table {
-  width: 100%;
-  max-width: 100%;
+.fgs-table-continuous {
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 8.5px;
+  width: 100%;
 }
 
-.fgs-table col.fgs-col-papers { width: 10%; }
-.fgs-table col.fgs-col-title { width: 24%; }
-.fgs-table col.fgs-col-num { width: 7.3%; }
+/* Semester title row — spans all 10 columns and acts as the
+ * visual separator between semesters in the continuous table */
+.fgs-sem-title-row td {
+  color: #1a1a1a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 4px 8px;
+  border-bottom: 1px solid #5a5a5a;
+}
+
+.fgs-sem-body:first-child .fgs-sem-title-row td {
+  border-top: none;
+}
+
+/* Dedicated SGPA row — sits directly under the TOTAL row of each
+ * semester (still inside the same continuous table) and right-aligns
+ * the SGPA value. Next semester's title row follows immediately. */
+.fgs-sem-sgpa-row td {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-bottom: 1px solid #5a5a5a;
+  padding: 2px 12px 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: right;
+  color: #1a1a1a;
+  letter-spacing: 0.3px;
+}
+
+/* Last semester's SGPA row — drop the bottom border so the
+ * outer container border draws the closing line cleanly. */
+.fgs-sem-body:last-child .fgs-sem-sgpa-row td {
+  border-bottom: none;
+}
+
+/* ============================================================
+ * TABLE — fixed layout, full width
+ * ============================================================ */
+.fgs-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 11px;
+}
+
+.fgs-table col.fgs-col-papers { width: 11%; }
+.fgs-table col.fgs-col-title  { width: 33%; }
+.fgs-table col.fgs-col-num    { width: 7%; }
 
 .fgs-th {
   border: 1px solid #5a5a5a;
-  padding: 4px 2px;
+  padding: 4px 3px;
   text-align: center;
   font-weight: 700;
   color: #1a1a1a;
-  font-size: 7.5px;
+  font-size: 10px;
   line-height: 1.2;
   vertical-align: middle;
-  background: #d4e4f7;
+  letter-spacing: 0.2px;
+  border-left:0px
+}
+.fgs-th:last-child {
+  border-right: 0;
+}
+.fgs-td-bold:last-child {
+  border-right: 0;
+}
+.fgs-td-total:last-child {
+  border-right: 0;
 }
 
 .fgs-td,
@@ -325,12 +409,13 @@
 .fgs-td-title,
 .fgs-td-code {
   border: 1px solid #888;
-  padding: 3px 3px;
-  font-size: 8.5px;
+  padding: 3px 4px;
+  font-size: 10.5px;
   color: #1a1a1a;
   vertical-align: middle;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  border-left:0px
 }
 
 .fgs-td-center,
@@ -345,14 +430,19 @@
 .fgs-td-title,
 .fgs-td-code {
   text-align: left;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .fgs-td-title {
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 7.5px;
+  font-size: 10px;
   line-height: 1.2;
-  padding-left: 4px;
+  padding-left: 6px;
+}
+
+.fgs-td-code {
+  font-size: 10px;
+  padding-left: 6px;
 }
 
 .fgs-td-total-left,
@@ -360,33 +450,38 @@
 .fgs-td-total-empty {
   border: 1px solid #888;
   padding: 3px 3px;
-  font-size: 8.5px;
+  font-size: 10.5px;
   font-weight: 700;
   text-align: center;
-  background: #e8eef7;
+  color: #1a1a1a;
+  border-left:0px
 }
 
 .fgs-td-total-left {
   text-align: left;
-  padding-left: 5px;
+  padding-left: 6px;
 }
 
-/* Summary */
+/* ============================================================
+ * SUMMARY / FOOTER — sits inside content-box, no top divider
+ * ============================================================ */
 .fgs-summary-section {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-top: 4px;
-  padding-top: 10px;
-  border-top: 2px solid #2c2c2c;
+  padding: 4px 4px 0;
+  background: transparent;
 }
 
 .fgs-summary-left {
   flex: 1;
+  min-width: 0;
 }
 
 .fgs-summary-right {
   flex: 1;
+  min-width: 0;
   text-align: right;
 }
 
@@ -398,34 +493,35 @@
 }
 
 .fgs-summary-row-spaced {
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .fgs-summary-label {
-  font-size: 13px;
+  font-size: 13.5px;
   color: #1a1a1a;
   font-weight: 700;
 }
 
 .fgs-summary-label-gap {
-  margin-left: 20px;
+  margin-left: 28px;
 }
 
 .fgs-cgpa-label {
   font-size: 14px;
   color: #1a1a1a;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .fgs-pub-date {
-  font-size: 11px;
-  color: #333;
-  margin-bottom: 14px;
+  font-size: 11.5px;
+  color: #222;
+  margin-bottom: 12px;
+  font-weight: 500;
 }
 
 .fgs-sign-block {
-  margin-top: 16px;
+  margin-top: 22px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -433,7 +529,7 @@
 }
 
 .fgs-sign-block-right {
-  margin-top: 16px;
+  margin-top: 22px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -441,29 +537,27 @@
 }
 
 .fgs-sign-placeholder {
-  width: 90px;
-  height: 38px;
+  width: 110px;
+  height: 60px;
   border-bottom: 1.5px solid #333;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  font-size: 10px;
-  color: #ccc;
-  padding-bottom: 2px;
+  display: block;
+  object-fit: contain;
 }
 
 .fgs-sign-label {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   color: #1a1a1a;
-  margin-top: 2px;
+  margin-top: 3px;
+  letter-spacing: 0.4px;
 }
 
 .fgs-sign-label-red {
   font-size: 12px;
   font-weight: 800;
   color: #8b0000;
-  margin-top: 2px;
+  margin-top: 3px;
+  letter-spacing: 0.4px;
 }
 
 @media print {

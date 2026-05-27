@@ -20,7 +20,7 @@ const STATIC_COLLEGE = {
   name: 'NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA',
   affiliation: '(Affiliated to Utkal University, Odisha)',
   examTitle: 'MARK SHEET CUM GRADE SHEET',
-  examType: 'POST GRADUATE DEGREE EXAMINATION - 2025',
+  examType: 'POST GRADUATE DEGREE EXAMINATION - 2026',
   slNo: '',
 };
 
@@ -216,7 +216,7 @@ export function mapPGAllSemestersToGradeSheet(api, user = null) {
       maximumMark: api.maximumMark ?? '—',
       cgpa,
       result: pickResult(api, rawSemesters),
-      dateOfPublication: '02/07/2025',
+      dateOfPublication: '30/05/2026',
     },
   };
 }
