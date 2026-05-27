@@ -16,6 +16,7 @@ const config = {
     SEARCH: '/students/search',
     MARKSHEET: '/marksheet',
     PG_SECOND_SEM_2024: '/pg-2ndsem2024',
+    PG_ALL_SEMESTERS: '/pg/all-semesters',
     UPLOAD_IMAGE: '/students/upload-image',
     DELETE_IMAGE: '/students/delete-image'
   }

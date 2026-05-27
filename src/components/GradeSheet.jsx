@@ -6,6 +6,7 @@ import gradeSheetData from '../data/gradeSheetData.json';
 import { fetchMarksheetsByRollNo } from '../services/marksheetService';
 import './GradeSheet.css';
 import { normalizeDeptKey, getPGRowMarks, sumPGTotals, toNum } from '../utils/marksheetUtils';
+import { buildPGCourseLine } from '../utils/finalGradeSheetMapper';
 
 export default function GradeSheet({ user }) {
   const navigate = useNavigate();
@@ -255,15 +256,6 @@ export default function GradeSheet({ user }) {
     return 'ENGLISH';
   };
 
-  const buildPGCourseLine = (departmentOrCourse) => {
-    const raw = departmentOrCourse == null ? '' : String(departmentOrCourse).trim();
-    const u = raw.toUpperCase();
-    if (!u) return '';
-    if (u.includes('ODIA')) return 'MASTER OF ARTS IN ODIA';
-    if (u.includes('COMMERCE')) return 'MASTER IN COMMERCE';
-    return `MASTER OF SCIENCE IN ${u}`;
-  };
-
   const fetchStudentData = async () => {
     try {
       setLoading(true);
@@ -298,7 +290,7 @@ export default function GradeSheet({ user }) {
               registrationNo:
                 pgSecondSem2024.autonomousRollNo || prevData.studentInfo.registrationNo,
               mediumOfExam: detectedLanguage || prevData.studentInfo.mediumOfExam,
-              course: courseName ? buildPGCourseLine(courseName) : prevData.studentInfo.course,
+              course: courseName ? buildPGCourseLine(courseName, user?.course) : prevData.studentInfo.course,
               coreTwo: '',
             },
           }));
@@ -386,7 +378,7 @@ export default function GradeSheet({ user }) {
         const language = looksPG ? detectMediumOfExam(deptFromApi || apiStudentInfo?.department) : 'ENGLISH';
         const courseInfo = looksPG
           ? deptFromApi
-            ? buildPGCourseLine(deptFromApi)
+            ? buildPGCourseLine(deptFromApi, user?.course)
             : data.studentInfo.course
           : data.studentInfo.course;
 
@@ -432,19 +424,16 @@ export default function GradeSheet({ user }) {
     if (gradeSheetRef.current) {
       setDownloading(true);
       
-      // Store original styles
       const originalWidth = gradeSheetRef.current.style.width;
       const originalMaxWidth = gradeSheetRef.current.style.maxWidth;
       const originalPadding = gradeSheetRef.current.style.padding;
       const originalMargin = gradeSheetRef.current.style.margin;
       
-      // Force compact dimensions for single-page PDF
       gradeSheetRef.current.style.width = '700px';
       gradeSheetRef.current.style.maxWidth = '700px';
       gradeSheetRef.current.style.padding = '15px';
       gradeSheetRef.current.style.margin = '0';
 
-      // Add compact PDF class
       gradeSheetRef.current.classList.add('pdf-compact');
 
       html2canvas(gradeSheetRef.current, { 
@@ -457,24 +446,20 @@ export default function GradeSheet({ user }) {
         const imgData = canvas.toDataURL("image/png");
         const pdf = new jsPDF("p", "mm", "a4");
         
-        // Calculate dimensions for single page
-        const imgWidth = 190; // A4 width in mm (with margins)
+        const imgWidth = 190;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        // Check if content fits on one page
-        const maxHeight = 270; // A4 height in mm (with margins)
+        const maxHeight = 270;
         
         if (imgHeight <= maxHeight) {
-          // Single page - center the content
-          const yOffset = (297 - imgHeight) / 2; // Center vertically
+          const yOffset = (297 - imgHeight) / 2;
           pdf.addImage(imgData, "PNG", 10, yOffset, imgWidth, imgHeight);
         } else {
-          // If still too large, scale down to fit on one page
           const scaleFactor = maxHeight / imgHeight;
           const scaledWidth = imgWidth * scaleFactor;
           const scaledHeight = maxHeight;
-          const xOffset = (210 - scaledWidth) / 2; // Center horizontally
-          const yOffset = (297 - scaledHeight) / 2; // Center vertically
+          const xOffset = (210 - scaledWidth) / 2;
+          const yOffset = (297 - scaledHeight) / 2;
           
           pdf.addImage(imgData, "PNG", xOffset, yOffset, scaledWidth, scaledHeight);
         }
@@ -482,13 +467,11 @@ export default function GradeSheet({ user }) {
         const filename = `grade_sheet_${data.studentInfo.name || 'student'}_${marksheetData?.publicationDate || 'result'}.pdf`.replace(/\s+/g, '_');
         pdf.save(filename);
         
-        // Restore original styles
         gradeSheetRef.current.style.width = originalWidth;
         gradeSheetRef.current.style.maxWidth = originalMaxWidth;
         gradeSheetRef.current.style.padding = originalPadding;
         gradeSheetRef.current.style.margin = originalMargin;
         
-        // Remove compact PDF class
         gradeSheetRef.current.classList.remove('pdf-compact');
         
         setDownloading(false);

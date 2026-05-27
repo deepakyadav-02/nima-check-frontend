@@ -29,21 +29,6 @@ export const isTokenValid = (token) => {
   }
 };
 
-export const getTokenData = (token) => {
-  if (!token) return null;
-  
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    
-    const payload = JSON.parse(atob(parts[1]));
-    return payload;
-  } catch (err) {
-    console.error('Error decoding token:', err);
-    return null;
-  }
-};
-
 export const clearAuth = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');

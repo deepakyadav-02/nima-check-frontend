@@ -1,10 +1,5 @@
 import config from '../config';
-
-const toNum = (v) => {
-  if (v === null || v === undefined) return null;
-  const n = Number(String(v).trim());
-  return Number.isFinite(n) ? n : null;
-};
+import { toNum } from '../utils/marksheetUtils';
 
 const normalizePGSecondSemRow = (row) => {
   if (!row || typeof row !== 'object') return null;
@@ -62,6 +57,39 @@ const normalizePGSecondSemRow = (row) => {
     totalCreditPoints: row.totalCreditPoints ?? totalCreditPoints,
     sgpa: row.sgpa ?? sgpa,
   };
+};
+
+export const fetchPGAllSemestersByRollNo = async (autonomousRollNo, alternateRollNo) => {
+  const primary = autonomousRollNo != null ? String(autonomousRollNo).trim() : '';
+  const alternate = alternateRollNo != null ? String(alternateRollNo).trim() : '';
+
+  if (!primary && !alternate) {
+    throw new Error('Autonomous roll number is required');
+  }
+
+  const tryFetch = async (key) => {
+    const url = `${config.API_BASE_URL}${config.API_ENDPOINTS.PG_ALL_SEMESTERS}/autonomous/${encodeURIComponent(
+      key
+    )}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(data.message || 'Failed to fetch PG final grade sheet data');
+    }
+
+    return data;
+  };
+
+  const primaryResult = primary ? await tryFetch(primary) : null;
+  if (primaryResult) return primaryResult;
+
+  if (alternate && alternate !== primary) {
+    return tryFetch(alternate);
+  }
+
+  return null;
 };
 
 export const fetchPGSecondSem2024ByRollNo = async (rollNo, alternateRollNo) => {

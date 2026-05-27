@@ -1,146 +1,96 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import FinalGradeSheetQR from "./FinalGradeSheetQR";
 import { getStudentId } from "../utils/studentId";
+import { fetchPGAllSemestersByRollNo } from "../services/marksheetService";
+import { mapPGAllSemestersToGradeSheet } from "../utils/finalGradeSheetMapper";
 import "./FinalGradeSheet.css";
 
-const PDF_CAPTURE_WIDTH_PX = 794;
-const PDF_MARGIN_MM = 2;
-const PDF_PAGE_WIDTH_MM = 210;
-const PDF_PAGE_HEIGHT_MM = 297;
+const PDF_MARGIN_MM = 10;
 
-const gradeSheetData = {
-  college: {
-    name: "NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA",
-    affiliation: "(Affiliated to Utkal University, Odisha)",
-    examTitle: "MARK SHEET CUM GRADE SHEET",
-    examType: "POST GRADUATE DEGREE EXAMINATION - 2025",
-    slNo: "SI No. - 202511070",
-  },
-  student: {
-    name: "ARGHYA ARCHANA SAHOO",
-    regdNo: "7264/23",
-    rollNo: "153NAC23005",
-    course: "MASTER OF SCIENCE IN CHEMISTRY",
-  },
-  semesters: [
-    {
-      title: "FIRST SEMESTER EXAMINATION",
-      papers: [
-        { code: "PAPER 1.1", title: "INORGANIC CHEMISTRY-I",               fullMark: "20+50", midSem: 19,  endSem: 36,  tot: 55, cr: 3, gr: "A",  gp: 8,  cp: 24 },
-        { code: "PAPER 1.2", title: "ORGANIC CHEMISTRY-I",                 fullMark: "20+50", midSem: 18,  endSem: 23,  tot: 41, cr: 3, gr: "B",  gp: 6,  cp: 18 },
-        { code: "PAPER 1.3", title: "PHYSICAL CHEMISTRY-I",                fullMark: "20+50", midSem: 19,  endSem: 16,  tot: 35, cr: 3, gr: "B",  gp: 6,  cp: 18 },
-        { code: "PAPER 1.4", title: "INORGANIC CHEMISTRY PRACTICAL -I",    fullMark: "50",    midSem: "",  endSem: 46,  tot: 46, cr: 4, gr: "O",  gp: 10, cp: 40 },
-        { code: "PAPER 1.5", title: "ORGANIC CHEMISTRY PRACTICAL -I",      fullMark: "50",    midSem: "",  endSem: 46,  tot: 46, cr: 4, gr: "O",  gp: 10, cp: 40 },
-        { code: "PAPER 1.6", title: "SPECTROSCOPY-I",                      fullMark: "20+50", midSem: 19,  endSem: 21,  tot: 40, cr: 3, gr: "B",  gp: 6,  cp: 18 },
-        { code: "PAPER 1.7", title: "COMPUTER FOR CHEMIST",                fullMark: "20+50", midSem: 18,  endSem: 48,  tot: 66, cr: 3, gr: "O",  gp: 10, cp: 30 },
-      ],
-      total: { fullMark: 450, midSem: 93, endSem: 236, tot: 329, cr: 23, cp: 188 },
-      sgpa: "8.17",
-    },
-    {
-      title: "SECOND SEMESTER EXAMINATION",
-      papers: [
-        { code: "CH-408", title: "INORGANIC CHEMISTRY-II",                fullMark: "20+50", midSem: 17, endSem: 31, tot: 48, cr: 3, gr: "B+", gp: 7,  cp: 21 },
-        { code: "CH-409", title: "ORGANIC CHEMISTRY-II",                  fullMark: "20+50", midSem: 17, endSem: 26, tot: 43, cr: 3, gr: "B+", gp: 7,  cp: 21 },
-        { code: "CH-410", title: "PHYSICAL CHEMISTRY-II",                 fullMark: "20+50", midSem: 18, endSem: 29, tot: 47, cr: 3, gr: "B+", gp: 7,  cp: 21 },
-        { code: "CH-411", title: "INORGANIC CHEMISTRY PRACTICAL -II",     fullMark: "50",    midSem: "", endSem: 46, tot: 46, cr: 4, gr: "O",  gp: 10, cp: 40 },
-        { code: "CH-412", title: "ORGANIC CHEMISTRY PRACTICAL -II",       fullMark: "50",    midSem: "", endSem: 46, tot: 46, cr: 4, gr: "O",  gp: 10, cp: 40 },
-        { code: "CH-413", title: "SPECTROSCOPY-II",                       fullMark: "20+50", midSem: 17, endSem: 23, tot: 40, cr: 3, gr: "B",  gp: 6,  cp: 18 },
-        { code: "CH-414", title: "ANALYTICAL CHEMISTRY",                  fullMark: "20+50", midSem: 18, endSem: 43, tot: 61, cr: 3, gr: "A+", gp: 9,  cp: 27 },
-      ],
-      total: { fullMark: 450, midSem: 87, endSem: 244, tot: 331, cr: 23, cp: 188 },
-      sgpa: "8.17",
-    },
-    {
-      title: "THIRD SEMESTER EXAMINATION",
-      papers: [
-        { code: "CH-501", title: "PERICYCLIC REACTIONS AND PHOTOCHEMISTRY",      fullMark: "20+50", midSem: 19, endSem: 39, tot: 58, cr: 3, gr: "A+", gp: 9,  cp: 27 },
-        { code: "CH-502", title: "BIOINORGANIC & SUPRAMOLECULAR CHEMISTRY",      fullMark: "20+50", midSem: 19, endSem: 36, tot: 55, cr: 3, gr: "A",  gp: 8,  cp: 24 },
-        { code: "CH-503", title: "APPLIED CHEMISTRY PRACTICAL",                  fullMark: "50",    midSem: "", endSem: 47, tot: 47, cr: 4, gr: "O",  gp: 10, cp: 40 },
-        { code: "CH-504", title: "PHYSICAL CHEMISTRY PRACTICAL-I",               fullMark: "50",    midSem: "", endSem: 47, tot: 47, cr: 4, gr: "O",  gp: 10, cp: 40 },
-        { code: "CH-505", title: "APPLICATION OF SPECTROSCOPY-I",                fullMark: "20+50", midSem: 18, endSem: 32, tot: 50, cr: 3, gr: "A",  gp: 8,  cp: 24 },
-        { code: "CH-506", title: "ORGANIC SYNTHESIS",                            fullMark: "20+50", midSem: 19, endSem: 37, tot: 56, cr: 3, gr: "A+", gp: 9,  cp: 27 },
-        { code: "CH-507", title: "ENVIRONMENTAL CHEMISTRY",                      fullMark: "20+50", midSem: 18, endSem: 28, tot: 46, cr: 3, gr: "B+", gp: 7,  cp: 21 },
-      ],
-      total: { fullMark: 450, midSem: 93, endSem: 266, tot: 359, cr: 23, cp: 203 },
-      sgpa: "8.83",
-    },
-    {
-      title: "FOURTH SEMESTER EXAMINATION",
-      papers: [
-        { code: "CH-508", title: "BIOORAGANIC CHEMISTRY",                 fullMark: "20+50", midSem: 19, endSem: 43, tot: 62, cr: 3, gr: "A+", gp: 9,  cp: 27 },
-        { code: "CH-509", title: "ORGANAOTRANSITION METAL CHEMISTRY",     fullMark: "20+50", midSem: 19, endSem: 38, tot: 57, cr: 3, gr: "A+", gp: 9,  cp: 27 },
-        { code: "CH-510", title: "POLYMER CHEMISTRY",                     fullMark: "20+50", midSem: 18, endSem: 42, tot: 60, cr: 3, gr: "A+", gp: 9,  cp: 27 },
-        { code: "CH-511", title: "SOLID STATE CHEMISTRY",                 fullMark: "20+50", midSem: 19, endSem: 43, tot: 62, cr: 3, gr: "A+", gp: 9,  cp: 27 },
-        { code: "CH-512", title: "PHYSICAL PRACTICAL -II",                fullMark: "50",    midSem: "", endSem: 47, tot: 47, cr: 4, gr: "O",  gp: 10, cp: 40 },
-        { code: "CH-513", title: "PROJECT WORK AND SEMINAR",              fullMark: "50",    midSem: 6,  endSem: 47, tot: 47, cr: 6, gr: "O",  gp: 10, cp: 60 },
-        { code: "CH-514", title: "APPLICATION OF SPECTROSCOPY-II",        fullMark: "20+50", midSem: 19, endSem: 41, tot: 60, cr: 3, gr: "A+", gp: 9,  cp: 27 },
-      ],
-      total: { fullMark: 450, midSem: 94, endSem: 301, tot: 395, cr: 25, cp: 235 },
-      sgpa: "9.40",
-    },
-  ],
-  summary: {
-    grandTotal: 1414,
-    maximumMark: 1800,
-    cgpa: "8.66",
-    result: "1ST CLASS",
-    dateOfPublication: "02/07/2025",
-  },
-};
+async function waitForImages(element) {
+  const imgs = [...element.querySelectorAll('img')];
+  await Promise.all(
+    imgs.map(
+      (img) =>
+        new Promise((resolve) => {
+          if (img.complete) resolve();
+          else {
+            img.onload = resolve;
+            img.onerror = resolve;
+          }
+        })
+    )
+  );
+}
 
 function SemesterTable({ semester }) {
   return (
     <div className="fgs-semester-section">
-      <div className="fgs-semester-header">{semester.title}</div>
-      <table className="fgs-table">
+      <div className="fgs-semester-header">
+        <span className="fgs-semester-title">{semester.title}</span>
+        <span className="fgs-semester-sgpa">SGPA : {semester.sgpa}</span>
+      </div>
+      <div className="fgs-table-wrap">
+        <table className="fgs-table">
+          <colgroup>
+            <col className="fgs-col-papers" />
+            <col className="fgs-col-title" />
+            <col className="fgs-col-num" />
+            <col className="fgs-col-num" />
+            <col className="fgs-col-num" />
+            <col className="fgs-col-num" />
+            <col className="fgs-col-num" />
+            <col className="fgs-col-num" />
+            <col className="fgs-col-num" />
+            <col className="fgs-col-num" />
+          </colgroup>
         <thead>
           <tr>
-            <th className="fgs-th fgs-col-papers">PAPERS</th>
-            <th className="fgs-th">PAPERS TITLE</th>
-            <th className="fgs-th fgs-col-fullmark">FULL MARK</th>
-            <th className="fgs-th fgs-col-mid">MID SEM</th>
-            <th className="fgs-th fgs-col-end">END SEM</th>
-            <th className="fgs-th fgs-col-tot">TOT</th>
-            <th className="fgs-th fgs-col-cr">CR</th>
-            <th className="fgs-th fgs-col-gr">GR</th>
-            <th className="fgs-th fgs-col-gp">GP</th>
-            <th className="fgs-th fgs-col-cp">CP</th>
+            <th className="fgs-th">PAPER</th>
+            <th className="fgs-th">TITLE</th>
+            <th className="fgs-th">FM</th>
+            <th className="fgs-th">MID</th>
+            <th className="fgs-th">END</th>
+            <th className="fgs-th">TOT</th>
+            <th className="fgs-th">CR</th>
+            <th className="fgs-th">GR</th>
+            <th className="fgs-th">GP</th>
+            <th className="fgs-th">CP</th>
           </tr>
         </thead>
         <tbody>
           {semester.papers.map((paper, idx) => (
             <tr key={idx}>
-              <td className="fgs-td fgs-col-papers">{paper.code}</td>
-              <td className="fgs-td-title">{paper.title}</td>
-              <td className="fgs-td-center fgs-col-fullmark">{paper.fullMark}</td>
-              <td className="fgs-td-center fgs-col-mid">{paper.midSem}</td>
-              <td className="fgs-td-center fgs-col-end">{paper.endSem}</td>
-              <td className="fgs-td-bold fgs-col-tot">{paper.tot}</td>
-              <td className="fgs-td-center fgs-col-cr">{paper.cr}</td>
-              <td className="fgs-td-bold fgs-col-gr">{paper.gr}</td>
-              <td className="fgs-td-center fgs-col-gp">{paper.gp}</td>
-              <td className="fgs-td-bold fgs-col-cp">{paper.cp}</td>
+              <td className="fgs-td fgs-td-code">{paper.code}</td>
+              <td className="fgs-td fgs-td-title">{paper.title}</td>
+              <td className="fgs-td-center">{paper.fullMark}</td>
+              <td className="fgs-td-center">{paper.midSem}</td>
+              <td className="fgs-td-center">{paper.endSem}</td>
+              <td className="fgs-td-bold">{paper.tot}</td>
+              <td className="fgs-td-center">{paper.cr}</td>
+              <td className="fgs-td-bold">{paper.gr}</td>
+              <td className="fgs-td-center">{paper.gp}</td>
+              <td className="fgs-td-bold">{paper.cp}</td>
             </tr>
           ))}
           <tr>
-            <td className="fgs-td-total-left fgs-col-papers">TOTAL</td>
+            <td className="fgs-td-total-left">TOTAL</td>
             <td className="fgs-td-total-empty"></td>
-            <td className="fgs-td-total fgs-col-fullmark">{semester.total.fullMark}</td>
-            <td className="fgs-td-total fgs-col-mid">{semester.total.midSem}</td>
-            <td className="fgs-td-total fgs-col-end">{semester.total.endSem}</td>
-            <td className="fgs-td-total fgs-col-tot">{semester.total.tot}</td>
-            <td className="fgs-td-total fgs-col-cr">{semester.total.cr}</td>
-            <td className="fgs-td-total-empty fgs-col-gr"></td>
-            <td className="fgs-td-total-empty fgs-col-gp"></td>
-            <td className="fgs-td-total fgs-col-cp">{semester.total.cp}</td>
+            <td className="fgs-td-total">{semester.total.fullMark}</td>
+            <td className="fgs-td-total">{semester.total.midSem}</td>
+            <td className="fgs-td-total">{semester.total.endSem}</td>
+            <td className="fgs-td-total">{semester.total.tot}</td>
+            <td className="fgs-td-total">{semester.total.cr}</td>
+            <td className="fgs-td-total-empty"></td>
+            <td className="fgs-td-total-empty"></td>
+            <td className="fgs-td-total">{semester.total.cp}</td>
           </tr>
         </tbody>
-      </table>
-      <div className="fgs-sgpa-row">SGPA : {semester.sgpa}</div>
+        </table>
+      </div>
     </div>
   );
 }
@@ -149,96 +99,137 @@ export default function FinalGradeSheet({ user }) {
   const navigate = useNavigate();
   const sheetRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
-  const { college, student, semesters, summary } = gradeSheetData;
+  const [gradeSheetData, setGradeSheetData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const studentId = getStudentId(user);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+
+      const autonomousRollNo =
+        user?.autonomousRollNo ||
+        user?.['Autonomous Roll No'] ||
+        studentId;
+
+      if (!autonomousRollNo) {
+        setError('Roll number not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const alternateRoll =
+          user?.['Roll No'] || user?.rollNo || user?.['College Roll No'];
+        const apiData = await fetchPGAllSemestersByRollNo(
+          autonomousRollNo,
+          alternateRoll
+        );
+
+        if (cancelled) return;
+
+        if (!apiData) {
+          setError(
+            'Final grade sheet is not available for this student. PG consolidated results may not be published yet.'
+          );
+          setGradeSheetData(null);
+          return;
+        }
+
+        setGradeSheetData(mapPGAllSemestersToGradeSheet(apiData, user));
+      } catch (err) {
+        if (!cancelled) {
+          setError(err?.message || 'Failed to load final grade sheet.');
+          setGradeSheetData(null);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, studentId]);
+
+  if (loading) {
+    return (
+      <div className="fgs-wrapper">
+        <div className="fgs-status-message">Loading final grade sheet…</div>
+      </div>
+    );
+  }
+
+  if (error || !gradeSheetData) {
+    return (
+      <div className="fgs-wrapper">
+        <div className="fgs-status-message fgs-status-error">{error || 'No data available.'}</div>
+        <button type="button" className="fgs-back-btn" onClick={() => navigate('/dashboard')}>
+          ← Back to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  const { college, student, semesters, summary } = gradeSheetData;
   const slNo = studentId ? `SI No. - ${studentId}` : college.slNo;
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     const el = sheetRef.current;
     if (!el) return;
 
     setDownloading(true);
+    el.classList.add('fgs-sheet--pdf');
 
-    const originalWidth = el.style.width;
-    const originalMaxWidth = el.style.maxWidth;
-    const originalPadding = el.style.padding;
-    const originalMargin = el.style.margin;
-    const originalBoxShadow = el.style.boxShadow;
+    try {
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      await waitForImages(el);
 
-    el.style.width = `${PDF_CAPTURE_WIDTH_PX}px`;
-    el.style.maxWidth = `${PDF_CAPTURE_WIDTH_PX}px`;
-    el.style.padding = "6px 8px";
-    el.style.margin = "0";
-    el.style.boxShadow = "none";
-    el.style.overflow = "visible";
-    el.classList.add("fgs-pdf-compact");
-
-    const restoreStyles = () => {
-      el.style.width = originalWidth;
-      el.style.maxWidth = originalMaxWidth;
-      el.style.padding = originalPadding;
-      el.style.margin = originalMargin;
-      el.style.boxShadow = originalBoxShadow;
-      el.style.overflow = "";
-      el.classList.remove("fgs-pdf-compact");
-    };
-
-    const capturePdf = () =>
-      html2canvas(el, {
+      const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         logging: false,
-        backgroundColor: "#ffffff",
+        backgroundColor: '#ffffff',
         scrollX: 0,
         scrollY: -window.scrollY,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
+        width: el.scrollWidth,
+        height: el.scrollHeight,
       });
 
-    const runCapture = () =>
-      capturePdf()
-        .then((canvas) => {
-          const imgData = canvas.toDataURL("image/png");
-          const pdf = new jsPDF("p", "mm", "a4");
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const contentW = pageW - PDF_MARGIN_MM * 2;
+      const contentH = pageH - PDF_MARGIN_MM * 2;
 
-          const maxWidth = PDF_PAGE_WIDTH_MM - PDF_MARGIN_MM * 2;
-          const maxHeight = PDF_PAGE_HEIGHT_MM - PDF_MARGIN_MM * 2;
+      let imgW = contentW;
+      let imgH = (canvas.height * imgW) / canvas.width;
+      const fit = Math.min(1, contentH / imgH, contentW / imgW);
+      imgW *= fit;
+      imgH *= fit;
 
-          let imgWidth = maxWidth;
-          let imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const x = PDF_MARGIN_MM + (contentW - imgW) / 2;
+      const y = PDF_MARGIN_MM + (contentH - imgH) / 2;
 
-          if (imgHeight > maxHeight) {
-            imgHeight = maxHeight;
-            imgWidth = (canvas.width * imgHeight) / canvas.height;
-          }
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', x, y, imgW, imgH);
 
-          pdf.addImage(
-            imgData,
-            "PNG",
-            PDF_MARGIN_MM,
-            PDF_MARGIN_MM,
-            imgWidth,
-            imgHeight
-          );
-
-          const roll = student.rollNo || studentId || "student";
-          const filename = `final_grade_sheet_${roll}.pdf`.replace(/\s+/g, "_");
-          pdf.save(filename);
-
-          restoreStyles();
-          setDownloading(false);
-        })
-        .catch((error) => {
-          console.error("Error generating PDF:", error);
-          alert("Failed to generate PDF. Please try again.");
-          restoreStyles();
-          setDownloading(false);
-        });
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => runCapture());
-    });
+      const roll = student.rollNo || studentId || 'student';
+      const filename = `final_grade_sheet_${roll}.pdf`.replace(/\s+/g, '_');
+      pdf.save(filename);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert(`Failed to generate PDF. Please try again.${err?.message ? `\n\n${err.message}` : ''}`);
+    } finally {
+      el.classList.remove('fgs-sheet--pdf');
+      setDownloading(false);
+    }
   };
 
   return (
@@ -261,10 +252,10 @@ export default function FinalGradeSheet({ user }) {
           {downloading ? "Generating PDF..." : "Download PDF"}
         </button>
       </div>
-      <div className="fgs-sheet" ref={sheetRef}>
+      <div className="fgs-sheet fgs-sheet--a4" ref={sheetRef}>
 
         <div className="fgs-header">
-          <img src="/college.png" alt="College Logo" className="fgs-logo" />
+          <img src="/college.png" alt="College Logo" className="fgs-logo" crossOrigin="anonymous" />
 
           <div className="fgs-header-text">
             <div className="fgs-college-name">{college.name}</div>
@@ -294,9 +285,15 @@ export default function FinalGradeSheet({ user }) {
           </div>
         </div>
 
-        {semesters.map((sem, idx) => (
-          <SemesterTable key={idx} semester={sem} />
-        ))}
+        {semesters.length === 0 ? (
+          <div className="fgs-status-message">No semester marks found for this student.</div>
+        ) : (
+          <div className="fgs-semesters-grid">
+            {semesters.map((sem, idx) => (
+              <SemesterTable key={idx} semester={sem} />
+            ))}
+          </div>
+        )}
 
         <div className="fgs-summary-section">
           <div className="fgs-summary-left">
@@ -308,7 +305,7 @@ export default function FinalGradeSheet({ user }) {
               <span className="fgs-summary-label">RESULT : {summary.result}</span>
             </div>
             <div className="fgs-sign-block">
-              <img src="/PRINCIPAL.jpg" alt="Principal Signature" className="fgs-sign-placeholder" />
+              <img src="/PRINCIPAL.jpg" alt="Principal Signature" className="fgs-sign-placeholder" crossOrigin="anonymous" />
               <div className="fgs-sign-label">PRINCIPAL</div>
             </div>
           </div>
@@ -319,7 +316,7 @@ export default function FinalGradeSheet({ user }) {
               Date of Publication of Result : {summary.dateOfPublication}
             </div>
             <div className="fgs-sign-block-right">
-              <img src="/EXAMINER.jpg" alt="Controller of Examinations Signature" className="fgs-sign-placeholder" />
+              <img src="/EXAMINER.jpg" alt="Controller of Examinations Signature" className="fgs-sign-placeholder" crossOrigin="anonymous" />
               <div className="fgs-sign-label-red">CONTROLLER OF EXAMINATIONS</div>
             </div>
           </div>

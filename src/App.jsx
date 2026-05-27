@@ -4,7 +4,6 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import AdmitCard from './components/AdmitCard';
 import Profile from './components/Profile';
-import Marksheet from './components/Marksheet';
 import GradeSheet from './components/GradeSheet';
 import FinalGradeSheet from './components/FinalGradeSheet';
 import GradeSheetQRVerify from './components/GradeSheetQRVerify';

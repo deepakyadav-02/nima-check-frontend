@@ -9,7 +9,9 @@ export function normalizeDeptKey(v) {
   if (s.includes('CHEM')) return 'CHEMISTRY';
   if (s.includes('GEO')) return 'GEOLOGY';
   if (s.includes('MATH')) return 'MATH';
-  if (s.includes('COMMERCE')) return 'COMMERCE';
+  if (s.includes('COMMERCE') || s === 'COMM' || (s.includes('COMM') && !s.includes('CHEM'))) {
+    return 'COMMERCE';
+  }
   if (s.includes('ODIA')) return 'ODIA';
   return '';
 }
@@ -20,18 +22,136 @@ export function getTheoryFullMarksByDept(deptKey) {
   return { midFm: 30, endFm: 70, totalFm: 100 };
 }
 
-/**
- * PG FM/MS display helper.
- * - Practical-only: MID blank, END/TOTAL FM=50.
- * - Chemistry theory: MID 20, END 50, TOTAL 70.
- * - Other theory: MID 30, END 70, TOTAL 100.
- * - Chemistry ICP-II/OCP-II special case where practical marks are stored in endsem.
- */
-export function getPGRowMarks(course, deptKey) {
+/** Normalize "Paper 4.4" / PAPER4.4 → PAPER4.4 */
+const normalizePaperCode = (value) => {
+  const s = String(value ?? '').trim();
+  const m = s.match(/^paper\s*(\d+)\.(\d+)$/i);
+  if (m) return `PAPER${m[1]}.${m[2]}`;
+  return s.replace(/\s/g, '').toUpperCase();
+};
+
+/** 4th-sem papers graded out of 100 total (single FM column, no 30+70 split). */
+const SEM4_HUNDRED_MARK_PAPERS = {
+  ODIA: new Set(['PAPER4.3', 'PAPER4.4']),
+  GEOLOGY: new Set(['PAPER4.5']),
+};
+
+export const getCoursePaperCode = (course) =>
+  normalizePaperCode(course?.paperCode ?? course?.courseType ?? '');
+
+/** Geology PAPER4.4: midsem + practical; END SEM column shows practical mark. */
+export const isGeologySem4Paper44 = (course, deptKey, semesterIndex) => {
+  if (deptKey !== 'GEOLOGY') return false;
+  const code = getCoursePaperCode(course);
+  if (code === 'PAPER4.4' || code === 'PRAC') return true;
+  if (semesterIndex === 3) {
+    const title = String(course?.paperName ?? course?.subjectName ?? '').toUpperCase();
+    if (title === 'PRACTICAL') return true;
+  }
+  return false;
+};
+
+/** Commerce PAPER4.1 project: full mark 200; END SEM shows practical / final mark. */
+export const isCommerceSem4ProjectPaper = (course, deptKey, semesterIndex) => {
+  if (deptKey !== 'COMMERCE') return false;
+  const code = getCoursePaperCode(course);
+  if (code === 'PAPER4.1') return true;
+  if (code === 'PROJ' || code === 'PROS') return true;
+  if (semesterIndex === 3) {
+    const title = String(course?.paperName ?? course?.subjectName ?? '').toUpperCase();
+    if (title.includes('PROJECT')) return true;
+  }
+  return false;
+};
+
+export const getCommerceProjectEndSemMs = (course) => {
   const mid = toNum(course?.midsem ?? course?.internal);
   const end = toNum(course?.endsem ?? course?.theory);
   const practical = toNum(course?.practical);
   const total = toNum(course?.marks);
+  if (practical != null) return practical;
+  if (end != null) return end;
+  if (mid != null && total != null) return total - mid;
+  return '';
+};
+
+/** Practical / final mark shown under END SEM for Geology PAPER4.4. */
+export const getGeologyPaper44EndSemMs = (course) => {
+  const mid = toNum(course?.midsem ?? course?.internal);
+  const end = toNum(course?.endsem ?? course?.theory);
+  const practical = toNum(course?.practical);
+  const total = toNum(course?.marks);
+  if (practical != null) return practical;
+  if (end != null) return end;
+  if (mid != null && total != null) return total - mid;
+  return '';
+};
+
+const isSem4HundredMarkPaper = (course, deptKey, semesterIndex) => {
+  if (isGeologySem4Paper44(course, deptKey, semesterIndex)) return false;
+  if (isCommerceSem4ProjectPaper(course, deptKey, semesterIndex)) return false;
+
+  const allowed = SEM4_HUNDRED_MARK_PAPERS[deptKey];
+  if (!allowed) return false;
+
+  const code = getCoursePaperCode(course);
+  if (allowed.has(code)) return true;
+
+  const title = String(course?.paperName ?? course?.subjectName ?? '').toUpperCase();
+  if (deptKey === 'ODIA') {
+    return title.includes('DISSERTATION') || title.includes('SEMINAR');
+  }
+  if (deptKey === 'GEOLOGY') {
+    return code === 'PROJ' || title.includes('PROJECT');
+  }
+  return false;
+};
+
+export function getPGRowMarks(course, deptKey, options = {}) {
+  const semesterIndex = options.semesterIndex;
+  const mid = toNum(course?.midsem ?? course?.internal);
+  const end = toNum(course?.endsem ?? course?.theory);
+  const practical = toNum(course?.practical);
+  const total = toNum(course?.marks);
+
+  /** Commerce PAPER4.1 project: full mark 200; no mid sem; practical in END SEM */
+  if (isCommerceSem4ProjectPaper(course, deptKey, semesterIndex)) {
+    const endSemMs = getCommerceProjectEndSemMs(course);
+    return {
+      midFm: '',
+      midMs: '',
+      endFm: 200,
+      endMs: endSemMs === '' ? '' : endSemMs,
+      totalFm: 200,
+      totalMs: total ?? '',
+    };
+  }
+
+  /** Geology PAPER4.4: midsem + practical in END SEM; full mark 30+70 = 100 */
+  if (isGeologySem4Paper44(course, deptKey, semesterIndex)) {
+    const fm = getTheoryFullMarksByDept(deptKey);
+    const endSemMs = getGeologyPaper44EndSemMs(course);
+    return {
+      midFm: fm.midFm,
+      midMs: mid ?? '',
+      endFm: fm.endFm,
+      endMs: endSemMs === '' ? '' : endSemMs,
+      totalFm: fm.totalFm,
+      totalMs: total ?? '',
+    };
+  }
+
+  /** ODIA PAPER4.3/4.4; Geology PAPER4.5 (project): full mark 100 */
+  if (isSem4HundredMarkPaper(course, deptKey, semesterIndex)) {
+    return {
+      midFm: '',
+      midMs: mid ?? '',
+      endFm: 100,
+      endMs: end ?? practical ?? total ?? '',
+      totalFm: 100,
+      totalMs: total ?? practical ?? end ?? '',
+    };
+  }
 
   const subjectNameRaw = course?.subjectName != null ? String(course.subjectName).trim() : '';
   const subjectNameUpper = subjectNameRaw.toUpperCase();
@@ -67,12 +187,12 @@ export function getPGRowMarks(course, deptKey) {
   };
 }
 
-export function sumPGTotals(courses, deptKey) {
+export function sumPGTotals(courses, deptKey, options = {}) {
   const totals = { midFm: 0, midMs: 0, endFm: 0, endMs: 0, totalFm: 0, totalMs: 0 };
   if (!Array.isArray(courses)) return totals;
 
   for (const c of courses) {
-    const m = getPGRowMarks(c, deptKey);
+    const m = getPGRowMarks(c, deptKey, options);
     totals.midFm += toNum(m.midFm) ?? 0;
     totals.midMs += toNum(m.midMs) ?? 0;
     totals.endFm += toNum(m.endFm) ?? 0;
