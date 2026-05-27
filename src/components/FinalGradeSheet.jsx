@@ -8,7 +8,7 @@ import { fetchPGAllSemestersByRollNo } from "../services/marksheetService";
 import { mapPGAllSemestersToGradeSheet } from "../utils/finalGradeSheetMapper";
 import "./FinalGradeSheet.css";
 
-const PDF_MARGIN_MM = 8;
+const PDF_MARGIN_MM = 3;
 const A4_WIDTH_PX = 794; // 210mm at 96dpi
 
 async function waitForImages(element) {

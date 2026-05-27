@@ -112,6 +112,117 @@
   transform: none !important;
   position: relative;
   background: #ffffff !important;
+  /* Tight overall sheet padding for PDF so the content fits A4
+   * aspect ratio and we don't get wasted side white-space. */
+  padding: 6px 10px 8px !important;
+}
+
+/* ------------------------------------------------------------
+ * PDF-only compression overrides — applied while the sheet is
+ * being captured by html2canvas. They shave a small amount of
+ * vertical space off every row/section so the rendered image's
+ * aspect ratio is close to A4 (1:1.414). Without this the image
+ * gets scaled down by html2canvas to fit the page height and
+ * the resulting PDF has noticeable horizontal white space.
+ * ------------------------------------------------------------ */
+.fgs-sheet--pdf.fgs-sheet--a4 {
+  gap: 3px !important;
+}
+
+.fgs-sheet--pdf .fgs-header {
+  padding-bottom: 0 !important;
+  margin-bottom: 1px !important;
+  gap: 10px !important;
+}
+
+.fgs-sheet--pdf .fgs-college-name {
+  padding-bottom: 1px !important;
+  margin-bottom: 2px !important;
+}
+
+.fgs-sheet--pdf .fgs-affiliation {
+  margin: 0 !important;
+}
+
+.fgs-sheet--pdf .fgs-exam-title {
+  margin: 2px auto 0 !important;
+  padding: 1px 10px !important;
+}
+
+.fgs-sheet--pdf .fgs-exam-type {
+  margin-top: 1px !important;
+}
+
+.fgs-sheet--pdf .fgs-content-box {
+  padding: 5px 7px 6px !important;
+  gap: 2px !important;
+}
+
+.fgs-sheet--pdf .fgs-student-info {
+  padding: 0 2px 1px !important;
+}
+
+.fgs-sheet--pdf .fgs-student-row {
+  margin: 0 !important;
+}
+
+.fgs-sheet--pdf .fgs-th {
+  padding: 1px 2px !important;
+  line-height: 1.1 !important;
+}
+
+.fgs-sheet--pdf .fgs-td,
+.fgs-sheet--pdf .fgs-td-center,
+.fgs-sheet--pdf .fgs-td-bold,
+.fgs-sheet--pdf .fgs-td-title,
+.fgs-sheet--pdf .fgs-td-code,
+.fgs-sheet--pdf .fgs-td-total-left,
+.fgs-sheet--pdf .fgs-td-total,
+.fgs-sheet--pdf .fgs-td-total-empty {
+  padding: 1px 3px !important;
+  line-height: 1.2 !important;
+}
+
+.fgs-sheet--pdf .fgs-td-title,
+.fgs-sheet--pdf .fgs-td-code {
+  line-height: 1.15 !important;
+}
+
+.fgs-sheet--pdf .fgs-sem-title-row td {
+  padding: 2px 8px !important;
+  line-height: 1.15 !important;
+}
+
+.fgs-sheet--pdf .fgs-sem-sgpa-row td {
+  padding: 1px 12px !important;
+  line-height: 1.15 !important;
+}
+
+.fgs-sheet--pdf .fgs-summary-section {
+  margin-top: 1px !important;
+  padding-top: 1px !important;
+}
+
+.fgs-sheet--pdf .fgs-summary-row-spaced {
+  margin-top: 3px !important;
+}
+
+.fgs-sheet--pdf .fgs-sign-block,
+.fgs-sheet--pdf .fgs-sign-block-right {
+  margin-top: 6px !important;
+  gap: 0 !important;
+}
+
+.fgs-sheet--pdf .fgs-sign-placeholder {
+  height: 28px !important;
+}
+
+.fgs-sheet--pdf .fgs-pub-date {
+  margin-bottom: 4px !important;
+}
+
+.fgs-sheet--pdf .fgs-cgpa-label {
+  margin-bottom: 2px !important;
 }
 
 .fgs-wrapper--pdf-capturing {
