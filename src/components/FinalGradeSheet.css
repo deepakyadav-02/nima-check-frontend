@@ -318,8 +318,27 @@
  * follows directly inside the same table.
  * ============================================================ */
 .fgs-semesters-wrap {
+  position: relative;
   border: 1.5px solid #2c2c2c;
   overflow: hidden;
+}
+
+/* Faded college logo watermark — centered inside the table area
+ * with very low opacity so it reads as a subtle trademark without
+ * affecting legibility of the marks underneath. */
+.fgs-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 620px;
+  height: 620px;
+  max-width: 70%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  opacity: 0.06;
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
 }
 
 .fgs-table-continuous {

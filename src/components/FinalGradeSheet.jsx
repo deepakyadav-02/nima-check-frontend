@@ -299,6 +299,13 @@ export default function FinalGradeSheet({ user }) {
             <div className="fgs-status-message">No semester marks found for this student.</div>
           ) : (
             <div className="fgs-semesters-wrap">
+              <img
+                src="/college_wbg.png"
+                alt=""
+                aria-hidden="true"
+                className="fgs-watermark"
+                crossOrigin="anonymous"
+              />
               <table className="fgs-table fgs-table-continuous">
                 <colgroup>
                   <col className="fgs-col-papers" />
