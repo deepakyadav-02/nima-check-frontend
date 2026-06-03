@@ -4,6 +4,62 @@ export function toNum(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+/** UI labels for PG result / degree class. */
+export const FAIL_RESULT_LABEL = 'FAIL';
+export const FIRST_CLASS_LABEL = 'FIRST CLASS';
+export const SECOND_CLASS_LABEL = 'SECOND CLASS';
+export const PASS_CLASS_LABEL = 'PASS';
+
+const PG_SEMESTER_KEYS = ['sem1', 'sem2', 'sem3', 'sem4'];
+
+/** Final PG degree class from overall percentage (60+ first, 50–59 second, below 50 pass). */
+export function resolveDegreeClassFromPercentage(percentage) {
+  const pct = toNum(percentage);
+  if (pct == null) return null;
+  if (pct >= 60) return FIRST_CLASS_LABEL;
+  if (pct >= 50) return SECOND_CLASS_LABEL;
+  return PASS_CLASS_LABEL;
+}
+
+/** True when the letter grade is F (fail). */
+export function isFailGrade(grade) {
+  return String(grade ?? '').trim().toUpperCase() === 'F';
+}
+
+/** True when any item in the list has grade F (checks `gradeKey`, default `grade`). */
+export function hasAnyFailGrade(items, gradeKey = 'grade') {
+  if (!Array.isArray(items)) return false;
+  return items.some((item) => isFailGrade(item?.[gradeKey]));
+}
+
+/** True when any subject in sem1–sem4 has grade F. */
+export function hasAnyFailInPGSemesters(semesters = {}) {
+  for (const key of PG_SEMESTER_KEYS) {
+    if (hasAnyFailGrade(semesters[key]?.subjects, 'grade')) return true;
+  }
+  return false;
+}
+
+/** Final PG grade sheet RESULT: FAIL if any F, else degree class from overall %. */
+export function resolveFinalPGResult({ percentage, semesters } = {}) {
+  if (hasAnyFailInPGSemesters(semesters)) return FAIL_RESULT_LABEL;
+  return resolveDegreeClassFromPercentage(percentage) ?? '—';
+}
+
+/** Format stored/computed result for UI (F → FAIL). */
+export function formatResultLabel(result) {
+  const s = result == null ? '' : String(result).trim();
+  if (!s) return s;
+  return s.toUpperCase() === 'F' ? FAIL_RESULT_LABEL : s;
+}
+
+/** Per-semester result: FAIL if any subject failed, otherwise stored classification. */
+export function resolveSemesterClassification(classification, items, gradeKey = 'grade') {
+  if (hasAnyFailGrade(items, gradeKey)) return FAIL_RESULT_LABEL;
+  const stored = classification == null ? '' : String(classification).trim();
+  return formatResultLabel(stored) || 'N/A';
+}
+
 export function normalizeDeptKey(v) {
   const s = v == null ? '' : String(v).toUpperCase();
   if (s.includes('CHEM')) return 'CHEMISTRY';

@@ -84,46 +84,57 @@
 
 /* Document Header */
 .document-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  grid-template-rows: auto auto auto;
+  column-gap: 20px;
+  row-gap: 6px;
   margin-top: 20px;
   margin-bottom: 30px;
   position: relative;
-  text-align: left;
+  align-items: start;
 }
 
 .document-header-text {
-  text-align: center;
-  flex: 1;
+  display: contents;
 }
 
 .college-logo {
   width: 150px;
   height: auto;
   flex-shrink: 0;
+  grid-row: 2 / 4;
+  grid-column: 1;
 }
 
 .exam-title {
+  grid-row: 1;
+  grid-column: 1 / -1;
   font-size: 20px;
   font-weight: bold;
-  margin: 0 0 5px 0;
+  margin: 0 0 8px 0;
   text-transform: uppercase;
+  width: 100%;
 }
 
 .document-type {
+  grid-row: 2;
+  grid-column: 2;
   font-size: 22px;
   font-weight: bold;
   margin: 0 0 15px 0;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .document-subtitle {
+  grid-row: 3;
+  grid-column: 2;
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 15px 0;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .serial-number {
@@ -493,16 +504,11 @@
 }
 
 .pdf-compact .document-header {
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 12px;
+  grid-template-columns: 100px 1fr;
+  column-gap: 12px;
+  row-gap: 4px;
   margin-top: 15px;
   margin-bottom: 15px;
-}
-
-.pdf-compact .document-header-text {
-  text-align: center;
 }
 
 .pdf-compact .college-logo {
@@ -513,6 +519,7 @@
 .pdf-compact .exam-title {
   font-size: 18px;
   margin: 0 0 3px 0;
+  transform: none;
 }
 
 .pdf-compact .document-type {

@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import FinalGradeSheetQR from "./FinalGradeSheetQR";
+import { COLLEGE_TITLE_FULL } from '../constants/collegeHeader';
+import FinalGradeSheetQR from './FinalGradeSheetQR';
+import { buildPGGradeSheetQrText } from '../utils/gradeSheetQr';
 import { getStudentId } from "../utils/studentId";
 import { fetchPGAllSemestersByRollNo } from "../services/marksheetService";
 import { mapPGAllSemestersToGradeSheet } from "../utils/finalGradeSheetMapper";
@@ -10,6 +12,21 @@ import "./FinalGradeSheet.css";
 
 const PDF_MARGIN_MM = 3;
 const A4_WIDTH_PX = 794; // 210mm at 96dpi
+
+/** Repeating white college-name tiles — fills entire light-blue content box */
+function buildWatermarkPatternBackground(text) {
+  const safe = String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="168" height="22" viewBox="0 0 168 22">
+    <text x="84" y="12" fill="rgba(255,255,255,0.52)" font-family="Arial,Helvetica,sans-serif" font-size="6.5" font-weight="600" text-anchor="middle">${safe}</text>
+  </svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
+const FGS_WATERMARK_PATTERN_BG = buildWatermarkPatternBackground(COLLEGE_TITLE_FULL);
 
 async function waitForImages(element) {
   const imgs = [...element.querySelectorAll('img')];
@@ -27,7 +44,7 @@ async function waitForImages(element) {
   );
 }
 
-function SemesterSection({ semester }) {
+const SemesterSection = memo(function SemesterSection({ semester }) {
   return (
     <tbody className="fgs-sem-body">
       <tr className="fgs-sem-title-row">
@@ -46,7 +63,7 @@ function SemesterSection({ semester }) {
         <th className="fgs-th">CP</th>
       </tr>
       {semester.papers.map((paper, idx) => (
-        <tr key={idx}>
+        <tr key={`${paper.code || 'paper'}-${idx}`}>
           <td className="fgs-td fgs-td-code">{paper.code}</td>
           <td className="fgs-td fgs-td-title">{paper.title}</td>
           <td className="fgs-td-center">{paper.fullMark}</td>
@@ -76,7 +93,7 @@ function SemesterSection({ semester }) {
       </tr>
     </tbody>
   );
-}
+});
 
 export default function FinalGradeSheet({ user }) {
   const navigate = useNavigate();
@@ -87,6 +104,14 @@ export default function FinalGradeSheet({ user }) {
   const [error, setError] = useState(null);
 
   const studentId = getStudentId(user);
+  const autonomousRollNo = useMemo(
+    () => user?.autonomousRollNo || user?.['Autonomous Roll No'] || studentId,
+    [user, studentId]
+  );
+  const alternateRoll = useMemo(
+    () => user?.['Roll No'] || user?.rollNo || user?.['College Roll No'],
+    [user]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -95,11 +120,6 @@ export default function FinalGradeSheet({ user }) {
       setLoading(true);
       setError(null);
 
-      const autonomousRollNo =
-        user?.autonomousRollNo ||
-        user?.['Autonomous Roll No'] ||
-        studentId;
-
       if (!autonomousRollNo) {
         setError('Roll number not found. Please log in again.');
         setLoading(false);
@@ -107,8 +127,6 @@ export default function FinalGradeSheet({ user }) {
       }
 
       try {
-        const alternateRoll =
-          user?.['Roll No'] || user?.rollNo || user?.['College Roll No'];
         const apiData = await fetchPGAllSemestersByRollNo(
           autonomousRollNo,
           alternateRoll
@@ -161,7 +179,14 @@ export default function FinalGradeSheet({ user }) {
   }
 
   const { college, student, semesters, summary } = gradeSheetData;
-  const slNo = studentId ? `SI No. - ${studentId}` : college.slNo;
+  const gradeSheetSlNo = college.gradeSheetSlNo || '';
+  const slNo = gradeSheetSlNo ? `SL No. - ${gradeSheetSlNo}` : '';
+  const gradeSheetQrText = buildPGGradeSheetQrText({
+    rollNo: student.rollNo,
+    name: student.name,
+    markSecured: summary.grandTotal,
+    result: summary.result,
+  });
 
   const generatePDF = async () => {
     const el = sheetRef.current;
@@ -263,23 +288,33 @@ export default function FinalGradeSheet({ user }) {
         <div className="fgs-header">
           <img src="/college.png" alt="College Logo" className="fgs-logo" crossOrigin="anonymous" />
 
-          <div className="fgs-header-text">
-            <div className="fgs-college-name">{college.name}</div>
-            <div className="fgs-header-meta">
-              <div className="fgs-header-info">
-                <div className="fgs-affiliation">{college.affiliation}</div>
-                <div className="fgs-exam-title">{college.examTitle}</div>
-                <div className="fgs-exam-type">{college.examType}</div>
-              </div>
-              <div className="fgs-header-right">
-                <FinalGradeSheetQR user={user} />
-                <div className="fgs-sl-no">{slNo}</div>
-              </div>
-            </div>
+          <div className="fgs-header-center">
+            <div className="fgs-college-name">{COLLEGE_TITLE_FULL}</div>
+            <div className="fgs-affiliation">{college.affiliation}</div>
+            <div className="fgs-exam-title">{college.examTitle}</div>
+            <div className="fgs-exam-type">{college.examType}</div>
+          </div>
+
+          <div className="fgs-header-right">
+            <FinalGradeSheetQR qrText={gradeSheetQrText} />
+            <div className="fgs-sl-no">{slNo}</div>
           </div>
         </div>
 
         <div className="fgs-content-box">
+          <div className="fgs-watermark" aria-hidden="true">
+            <div
+              className="fgs-watermark-pattern"
+              style={{ backgroundImage: FGS_WATERMARK_PATTERN_BG }}
+            />
+            <img
+              src="/college.png"
+              alt=""
+              className="fgs-watermark-logo"
+              crossOrigin="anonymous"
+            />
+          </div>
+
           <div className="fgs-student-info">
             <div className="fgs-student-row">
               <span className="fgs-label">NAME :</span>
@@ -299,13 +334,6 @@ export default function FinalGradeSheet({ user }) {
             <div className="fgs-status-message">No semester marks found for this student.</div>
           ) : (
             <div className="fgs-semesters-wrap">
-              <img
-                src="/college_wbg.png"
-                alt=""
-                aria-hidden="true"
-                className="fgs-watermark"
-                crossOrigin="anonymous"
-              />
               <table className="fgs-table fgs-table-continuous">
                 <colgroup>
                   <col className="fgs-col-papers" />

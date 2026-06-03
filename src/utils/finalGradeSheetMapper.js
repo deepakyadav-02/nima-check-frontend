@@ -3,11 +3,15 @@ import {
   getPGRowMarks,
   sumPGTotals,
   toNum,
+  resolveFinalPGResult,
   isGeologySem4Paper44,
   getGeologyPaper44EndSemMs,
   isCommerceSem4ProjectPaper,
   getCommerceProjectEndSemMs,
 } from './marksheetUtils';
+import { COLLEGE_TITLE_FULL } from '../constants/collegeHeader';
+
+const SEMESTER_KEYS = ['sem1', 'sem2', 'sem3', 'sem4'];
 
 const SEMESTER_TITLES = [
   'FIRST SEMESTER EXAMINATION',
@@ -17,7 +21,7 @@ const SEMESTER_TITLES = [
 ];
 
 const STATIC_COLLEGE = {
-  name: 'NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA',
+  name: COLLEGE_TITLE_FULL,
   affiliation: '(Affiliated to Utkal University, Odisha)',
   examTitle: 'MARK SHEET CUM GRADE SHEET',
   examType: 'POST GRADUATE DEGREE EXAMINATION - 2026',
@@ -61,17 +65,19 @@ const formatFullMark = (marks, deptKey) => {
   return `${marks.midFm}+${marks.endFm}`;
 };
 
-const mapSubjectToPaper = (subject, deptKey, semesterIndex) => {
-  const course = subjectToCourse(subject);
+const creditPointFor = (course) => {
+  if (course.creditPoint != null) return course.creditPoint;
+  if (course.credit != null && course.gradePoint != null) {
+    return course.credit * course.gradePoint;
+  }
+  return '';
+};
+
+const courseToPaper = (course, deptKey, semesterIndex) => {
   const marks = getPGRowMarks(course, deptKey, { semesterIndex });
   const credit = course.credit;
   const gp = course.gradePoint;
-  const cp =
-    course.creditPoint != null
-      ? course.creditPoint
-      : credit != null && gp != null
-        ? credit * gp
-        : '';
+  const cp = creditPointFor(course);
 
   let endSem = marks.endMs === '' || marks.endMs == null ? '' : marks.endMs;
   if (isGeologySem4Paper44(course, deptKey, semesterIndex)) {
@@ -102,19 +108,15 @@ const mapSemesterBlock = (semBlock, semIndex, deptKey) => {
   if (subjects.length === 0) return null;
 
   const courses = subjects.map(subjectToCourse);
-  const papers = subjects.map((s) => mapSubjectToPaper(s, deptKey, semIndex));
+  const papers = courses.map((course) => courseToPaper(course, deptKey, semIndex));
   const totals = sumPGTotals(courses, deptKey, { semesterIndex: semIndex });
 
-  const totalCr = courses.reduce((s, c) => s + (toNum(c.credit) ?? 0), 0);
-  const totalCp = courses.reduce((s, c) => {
-    const cp =
-      c.creditPoint != null
-        ? c.creditPoint
-        : c.credit != null && c.gradePoint != null
-          ? c.credit * c.gradePoint
-          : 0;
-    return s + (toNum(cp) ?? 0);
-  }, 0);
+  let totalCr = 0;
+  let totalCp = 0;
+  for (const course of courses) {
+    totalCr += toNum(course.credit) ?? 0;
+    totalCp += toNum(creditPointFor(course)) ?? 0;
+  }
 
   const storedSgpa = toNum(semBlock?.sgpa);
   const computedSgpa =
@@ -140,7 +142,7 @@ const mapSemesterBlock = (semBlock, semIndex, deptKey) => {
       cp: totalCp || '',
     },
     sgpa,
-    _meta: { totalCr, totalCp, classification: semBlock?.classification || '' },
+    _meta: { totalCr, totalCp },
   };
 };
 
@@ -163,23 +165,6 @@ const computeOverallCgpa = (semesters) => {
   return Number((sgpas.reduce((a, b) => a + b, 0) / sgpas.length).toFixed(2));
 };
 
-const pickResult = (api, semesters) => {
-  const sem4 = semesters[3];
-  const fromSem4 = sem4?._meta?.classification;
-  if (fromSem4) return String(fromSem4).toUpperCase();
-
-  for (let i = semesters.length - 1; i >= 0; i -= 1) {
-    const c = semesters[i]?._meta?.classification;
-    if (c) return String(c).toUpperCase();
-  }
-
-  const pct = toNum(api?.percentage);
-  if (pct == null) return '—';
-  if (pct >= 60) return '1ST CLASS';
-  if (pct >= 50) return '2ND CLASS';
-  return 'PASS';
-};
-
 /**
  * Map GET /api/pg/all-semesters response → FinalGradeSheet UI model.
  */
@@ -189,10 +174,9 @@ export function mapPGAllSemestersToGradeSheet(api, user = null) {
   }
 
   const deptKey = normalizeDeptKey(api.department || api.course);
-  const semKeys = ['sem1', 'sem2', 'sem3', 'sem4'];
-  const rawSemesters = semKeys
-    .map((key, i) => mapSemesterBlock(api.semesters?.[key], i, deptKey))
-    .filter(Boolean);
+  const rawSemesters = SEMESTER_KEYS.map((key, i) =>
+    mapSemesterBlock(api.semesters?.[key], i, deptKey)
+  ).filter(Boolean);
 
   const semesters = rawSemesters.map(({ _meta, ...rest }) => rest);
 
@@ -203,7 +187,10 @@ export function mapPGAllSemestersToGradeSheet(api, user = null) {
     user?.Course || user?.course || user?.department || user?.Department;
 
   return {
-    college: { ...STATIC_COLLEGE },
+    college: {
+      ...STATIC_COLLEGE,
+      gradeSheetSlNo: api.gradeSheetSlNo ? String(api.gradeSheetSlNo).trim() : '',
+    },
     student: {
       name: (api.studentName || user?.name || user?.['Name of the Students'] || '—').toUpperCase(),
       regdNo: api.registrationNumber || user?.registrationNumber || user?.['Registration Number'] || '—',
@@ -215,8 +202,11 @@ export function mapPGAllSemestersToGradeSheet(api, user = null) {
       grandTotal: toNum(api.grandTotal) ?? api.grandTotal ?? '—',
       maximumMark: api.maximumMark ?? '—',
       cgpa,
-      result: pickResult(api, rawSemesters),
-      dateOfPublication: '30/05/2026',
+      result: resolveFinalPGResult({
+        percentage: api.percentage,
+        semesters: api.semesters,
+      }),
+      dateOfPublication: '02/06/2026',
     },
   };
 }

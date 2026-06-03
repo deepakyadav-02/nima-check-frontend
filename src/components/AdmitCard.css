@@ -202,7 +202,8 @@
   text-align: center;
 }
 
-.header-text h2 {
+.header-text h2,
+.header-text .college-name-heading {
   font-size: 20px;
   margin: 0;
   padding: 0;
@@ -713,7 +714,8 @@
     max-width: 800px; /* Prevent overflow */
   }
   
-  .header-text h2 {
+  .header-text h2,
+  .header-text .college-name-heading {
     font-size: 16px;
   }
   
@@ -790,7 +792,8 @@
   min-height: 80px;
 }
 
-.pdf-compact .header-text h2 {
+.pdf-compact .header-text h2,
+.pdf-compact .header-text .college-name-heading {
   font-size: 18px;
   margin: 0;
 }

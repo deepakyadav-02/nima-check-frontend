@@ -15,7 +15,8 @@
   border: 1px solid #ccc;
 }
 
-.qr-verify-card--error {
+.qr-verify-card--error,
+.qr-verify-card--loading {
   text-align: center;
 }
 
@@ -35,12 +36,13 @@
   flex-shrink: 0;
 }
 
-.qr-verify-header h1 {
+.qr-verify-header h1,
+.qr-verify-header .college-name-heading {
   font-size: 15px;
   font-weight: 800;
   color: #1a1a6e;
   margin: 0 0 4px;
-  line-height: 1.3;
+  line-height: 1.15;
   text-transform: uppercase;
 }
 

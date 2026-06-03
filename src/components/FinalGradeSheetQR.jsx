@@ -1,20 +1,19 @@
 import QRCode from 'react-qr-code';
-import { getGradeSheetQrUrlForUser } from '../utils/gradeSheetQr';
 
-export default function FinalGradeSheetQR({ user }) {
-  const qrUrl = getGradeSheetQrUrlForUser(user);
+export default function FinalGradeSheetQR({ qrText }) {
+  const payload = qrText != null ? String(qrText).trim() : '';
 
-  if (!qrUrl) {
+  if (!payload) {
     return (
-      <div className="fgs-qr-placeholder fgs-qr-placeholder--empty" title="Student ID not available">
+      <div className="fgs-qr-placeholder fgs-qr-placeholder--empty" title="QR data not available">
         N/A
       </div>
     );
   }
 
   return (
-    <div className="fgs-qr-code" title="Scan to verify grade sheet">
-      <QRCode value={qrUrl} size={64} level="M" />
+    <div className="fgs-qr-code" title="Scan to view result details">
+      <QRCode value={payload} size={72} level="L" />
     </div>
   );
 }

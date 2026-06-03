@@ -92,6 +92,24 @@ export const fetchPGAllSemestersByRollNo = async (autonomousRollNo, alternateRol
   return null;
 };
 
+/** Public PG grade sheet QR verification (no login). */
+export const verifyPGGradeSheetBySlNo = async (slNo) => {
+  const key = slNo != null ? String(slNo).trim() : '';
+  if (!/^2026\d{5}$/.test(key)) {
+    throw new Error('Invalid serial number');
+  }
+
+  const url = `${config.API_BASE_URL}${config.API_ENDPOINTS.PG_ALL_SEMESTERS}/verify/${encodeURIComponent(key)}`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Verification failed');
+  }
+
+  return data;
+};
+
 export const fetchPGSecondSem2024ByRollNo = async (rollNo, alternateRollNo) => {
   const primary = rollNo != null ? String(rollNo).trim() : '';
   const alternate = alternateRollNo != null ? String(alternateRollNo).trim() : '';

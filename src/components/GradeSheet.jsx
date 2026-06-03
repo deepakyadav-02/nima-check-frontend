@@ -1,12 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import CollegeNameHeading from './CollegeNameHeading';
 import gradeSheetData from '../data/gradeSheetData.json';
 import { fetchMarksheetsByRollNo } from '../services/marksheetService';
 import './GradeSheet.css';
-import { normalizeDeptKey, getPGRowMarks, sumPGTotals, toNum } from '../utils/marksheetUtils';
+import { normalizeDeptKey, getPGRowMarks, sumPGTotals, toNum, resolveSemesterClassification } from '../utils/marksheetUtils';
 import { buildPGCourseLine } from '../utils/finalGradeSheetMapper';
+
+const hasAny = (v) => v !== null && v !== undefined && String(v).trim() !== '';
+
+const isPGLikeCourseRow = (course) => {
+  if (!course || typeof course !== 'object') return false;
+  // PG rows commonly carry midsem/endsem/practical + marks; UG rows carry theory/internal/practical.
+  return hasAny(course.midsem) || hasAny(course.endsem) || hasAny(course.practical) || hasAny(course.marks);
+};
+
+const detectIsPGMarksheetLayout = (courses) => {
+  if (!Array.isArray(courses) || courses.length === 0) return false;
+  return courses.some(isPGLikeCourseRow);
+};
 
 export default function GradeSheet({ user }) {
   const navigate = useNavigate();
@@ -29,28 +43,11 @@ export default function GradeSheet({ user }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, selectedSem, selectedYear, showGradeSheet]);
 
-  const hasAny = (v) => v !== null && v !== undefined && String(v).trim() !== '';
-
-  const isPGLikeCourseRow = (course) => {
-    if (!course || typeof course !== 'object') return false;
-    // PG rows commonly carry midsem/endsem/practical + marks; UG rows carry theory/internal/practical.
-    return (
-      hasAny(course.midsem) ||
-      hasAny(course.endsem) ||
-      hasAny(course.practical) ||
-      hasAny(course.marks)
-    );
-  };
-
-  const detectIsPGMarksheetLayout = (courses) => {
-    if (!Array.isArray(courses) || courses.length === 0) return false;
-    return courses.some(isPGLikeCourseRow);
-  };
-
   const isPGUser = String(user?.studentType || '').toUpperCase() === 'PG';
 
-  const deptKeyForPgTable = normalizeDeptKey(
-    marksheetData?.department ?? data?.studentInfo?.course ?? ''
+  const deptKeyForPgTable = useMemo(
+    () => normalizeDeptKey(marksheetData?.department ?? data?.studentInfo?.course ?? ''),
+    [marksheetData?.department, data?.studentInfo?.course]
   );
 
   const buildSecondSemMarksheetData = (secondSemRow) => {
@@ -195,7 +192,7 @@ export default function GradeSheet({ user }) {
       totalGradePoints: Number(totalGradePoints.toFixed(2)),
       sgpa: sgpaOut ?? '',
       publicationDate: data.publicationDate,
-      classification: secondSemRow?.Classification || 'N/A',
+      classification: resolveSemesterClassification(secondSemRow?.Classification, courses),
     };
   };
 
@@ -229,7 +226,7 @@ export default function GradeSheet({ user }) {
       totalGradePoints: Number(totalGradePoints.toFixed(2)),
       sgpa: pgRow?.sgpa ?? '',
       publicationDate: data.publicationDate,
-      classification: pgRow?.classification || 'N/A',
+      classification: resolveSemesterClassification(pgRow?.classification, courses),
     };
   };
 
@@ -365,7 +362,10 @@ export default function GradeSheet({ user }) {
           totalGradePoints: Number(((sem1Marksheet.courses || []).reduce((sum, c) => sum + (typeof c?.gradePoint === 'number' ? c.gradePoint : 0), 0)).toFixed(2)),
           sgpa: sem1Marksheet.sgpa || 0,
           publicationDate: publicationDate,
-          classification: sem1Marksheet.classification || 'N/A'
+          classification: resolveSemesterClassification(
+            sem1Marksheet.classification,
+            sem1Marksheet.courses || []
+          )
         });
         
         const deptFromApi = formatCourseName(apiStudentInfo?.department);
@@ -614,7 +614,7 @@ export default function GradeSheet({ user }) {
         <div className="document-header">
           <img src="/college.png" alt="College Logo" className="college-logo" />
           <div className="document-header-text">
-            <h1 className="exam-title">NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h1>
+            <CollegeNameHeading as="h1" className="exam-title" />
             <h2 className="document-type">{isPGUser ? 'MARK SHEET CUM GRADE SHEET' : 'GRADE SHEET'}</h2>
             <p className="document-subtitle">
               {selectedSem === '2'

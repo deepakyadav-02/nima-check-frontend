@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas';
 import axios from 'axios';
 import config from '../config';
 import './AdmitCard.css';
+import CollegeNameHeading from './CollegeNameHeading';
 
 const AdmitCard = ({ user }) => {
   const navigate = useNavigate();
@@ -488,7 +489,7 @@ const AdmitCard = ({ user }) => {
                 <img src="/college.png" alt="College Logo" className="college-logo"/>
               </div>
               <div className="header-text">
-                <h2>NIMAPARA AUTONOMOUS COLLEGE, NIMAPARA</h2>
+                <CollegeNameHeading as="h2" />
                 <h3>ADMIT CARD (BATCH -{studentData.batch || '2024'})</h3>
                 <h3>EXAMINATION-2026</h3>
               </div>

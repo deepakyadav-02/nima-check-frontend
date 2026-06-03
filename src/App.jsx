@@ -6,7 +6,7 @@ import AdmitCard from './components/AdmitCard';
 import Profile from './components/Profile';
 import GradeSheet from './components/GradeSheet';
 import FinalGradeSheet from './components/FinalGradeSheet';
-import GradeSheetQRVerify from './components/GradeSheetQRVerify';
+import PGGradeSheetQRVerify from './components/PGGradeSheetQRVerify';
 import './App.css';
 
 function App() {
@@ -120,8 +120,8 @@ function App() {
               } 
             />
             <Route
-              path="/verify/grade-sheet/:studentId"
-              element={<GradeSheetQRVerify />}
+              path="/verify/pg-grade-sheet/:slNo"
+              element={<PGGradeSheetQRVerify />}
             />
           </Routes>
         </main>
