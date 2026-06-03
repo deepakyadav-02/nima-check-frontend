@@ -95,6 +95,49 @@ const SEM4_HUNDRED_MARK_PAPERS = {
 export const getCoursePaperCode = (course) =>
   normalizePaperCode(course?.paperCode ?? course?.courseType ?? '');
 
+const normalizeChemPaperCode = (raw) => {
+  const s = String(raw ?? '').trim().toUpperCase();
+  const m = s.match(/^CH-?(\d{3})$/);
+  if (m) return `CH-${m[1]}`;
+  return normalizePaperCode(s);
+};
+
+/** Chemistry practical rows: full mark 50, no mid sem (sem1–sem4 paper codes). */
+const CHEMISTRY_PRACTICAL_ONLY_BY_SEM = {
+  0: new Set(['PAPER1.4', 'PAPER1.5']),
+  1: new Set(['CH-411', 'CH-412']),
+  2: new Set(['CH-503', 'CH-504']),
+  3: new Set(['CH-512']),
+};
+
+export const isChemistryPracticalOnlyPaper = (course, deptKey, semesterIndex) => {
+  if (deptKey !== 'CHEMISTRY' || semesterIndex == null) return false;
+  const allowed = CHEMISTRY_PRACTICAL_ONLY_BY_SEM[semesterIndex];
+  if (!allowed) return false;
+
+  const code = normalizeChemPaperCode(
+    course?.paperCode ?? course?.courseType ?? course?.paper?.code ?? ''
+  );
+  if (allowed.has(code)) return true;
+
+  const title = String(course?.paperName ?? course?.subjectName ?? course?.paper?.title ?? '')
+    .toUpperCase()
+    .trim();
+  if (semesterIndex === 0 && (title.includes('PRACTICAL') || title === 'ICP-II' || title === 'OCP-II')) {
+    return title.includes('INORGANIC CHEMISTRY PRACTICAL') || title.includes('ORGANIC CHEMISTRY PRACTICAL')
+      || title === 'ICP-II' || title === 'OCP-II';
+  }
+  if (semesterIndex === 1 && title.includes('PRACTICAL')) {
+    return title.includes('INORGANIC CHEMISTRY PRACTICAL') || title.includes('ORGANIC CHEMISTRY PRACTICAL');
+  }
+  return false;
+};
+
+const getChemistryPracticalEndSemMs = (course, mid, end, practical, total) => {
+  const v = end ?? practical ?? mid ?? total;
+  return v == null || v === '' ? '' : v;
+};
+
 /** Geology PAPER4.4: midsem + practical; END SEM column shows practical mark. */
 export const isGeologySem4Paper44 = (course, deptKey, semesterIndex) => {
   if (deptKey !== 'GEOLOGY') return false;
@@ -209,26 +252,28 @@ export function getPGRowMarks(course, deptKey, options = {}) {
     };
   }
 
-  const subjectNameRaw = course?.subjectName != null ? String(course.subjectName).trim() : '';
-  const subjectNameUpper = subjectNameRaw.toUpperCase();
-  const forcePracticalOnlyDisplay = subjectNameUpper === 'ICP-II' || subjectNameUpper === 'OCP-II';
-
-  const chemistryPracticalMarks =
-    forcePracticalOnlyDisplay && (end ?? practical ?? mid ?? total) !== null
-      ? end ?? practical ?? mid ?? total
-      : null;
-
-  const practicalMarks = chemistryPracticalMarks ?? (practical !== null && practical > 0 ? practical : null);
-
-  const isPracticalOnly = forcePracticalOnlyDisplay || (practicalMarks !== null && practicalMarks > 0);
-  if (isPracticalOnly) {
+  /** Chemistry practical papers (sem1 PAPER1.4/1.5, sem2 CH-411/412, etc.): FM 50, empty mid */
+  if (isChemistryPracticalOnlyPaper(course, deptKey, semesterIndex)) {
+    const endSemMs = getChemistryPracticalEndSemMs(course, mid, end, practical, total);
     return {
       midFm: '',
       midMs: '',
       endFm: 50,
-      endMs: practicalMarks ?? '',
+      endMs: endSemMs === '' ? '' : endSemMs,
       totalFm: 50,
-      totalMs: total ?? practicalMarks ?? '',
+      totalMs: total ?? endSemMs ?? '',
+    };
+  }
+
+  const practicalMarks = practical !== null && practical > 0 ? practical : null;
+  if (practicalMarks !== null) {
+    return {
+      midFm: '',
+      midMs: '',
+      endFm: 50,
+      endMs: practicalMarks,
+      totalFm: 50,
+      totalMs: total ?? practicalMarks,
     };
   }
 
