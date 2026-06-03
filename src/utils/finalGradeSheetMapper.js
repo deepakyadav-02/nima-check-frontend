@@ -45,20 +45,31 @@ export function buildPGCourseLine(departmentOrCourse, userCourse) {
   return `MASTER OF SCIENCE IN ${u}`;
 }
 
-const subjectToCourse = (subject) => ({
-  paperCode: subject.paper?.code ?? subject.paperCode ?? subject.courseType ?? '',
-  paperName: subject.paper?.title ?? subject.paperName ?? subject.subjectName ?? '',
-  subjectName: subject.paper?.title ?? subject.paperName ?? subject.subjectName ?? '',
-  courseType: subject.paper?.code ?? subject.courseType ?? subject.paperCode ?? '',
-  credit: toNum(subject.credit),
-  midsem: toNum(subject.midsemMark ?? subject.midsem),
-  endsem: toNum(subject.finalMark ?? subject.final),
-  practical: toNum(subject.practicalMark ?? subject.practical),
-  marks: toNum(subject.marks ?? subject.totalMark),
-  grade: subject.grade || '',
-  gradePoint: toNum(subject.gradePoint),
-  creditPoint: toNum(subject.creditPoint),
-});
+const subjectToCourse = (subject) => {
+  const finalMark = toNum(subject.finalMark ?? subject.final);
+  const practicalMark = toNum(subject.practicalMark ?? subject.practical);
+  const totalMark = toNum(subject.marks ?? subject.totalMark);
+  const midsemMark = toNum(subject.midsemMark ?? subject.midsem);
+
+  return {
+    paperCode: subject.paper?.code ?? subject.paperCode ?? subject.courseType ?? '',
+    paperName: subject.paper?.title ?? subject.paperName ?? subject.subjectName ?? '',
+    subjectName: subject.paper?.title ?? subject.paperName ?? subject.subjectName ?? '',
+    courseType: subject.paper?.code ?? subject.courseType ?? subject.paperCode ?? '',
+    credit: toNum(subject.credit),
+    midsem: midsemMark,
+    endsem: finalMark,
+    practical: practicalMark,
+    marks: totalMark,
+    finalMark,
+    practicalMark,
+    totalMark,
+    midsemMark,
+    grade: subject.grade || '',
+    gradePoint: toNum(subject.gradePoint),
+    creditPoint: toNum(subject.creditPoint),
+  };
+};
 
 const formatFullMark = (marks, deptKey) => {
   if (marks.midFm === '' || marks.midFm == null) {
@@ -91,8 +102,11 @@ const courseToPaper = (course, deptKey, semesterIndex) => {
     if (projectEnd !== '') endSem = projectEnd;
   }
   if (isChemistryPracticalOnlyPaper(course, deptKey, semesterIndex)) {
-    const practicalEnd = getChemistryPracticalEndSemMs(course);
-    if (practicalEnd !== '') endSem = practicalEnd;
+    endSem = getChemistryPracticalEndSemMs(course);
+    const tot = toNum(course.marks ?? course.totalMark);
+    if ((endSem === '' || endSem === 0) && tot != null && tot > 0) {
+      endSem = tot;
+    }
   }
 
   return {

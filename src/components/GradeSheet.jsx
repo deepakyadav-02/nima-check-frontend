@@ -747,7 +747,8 @@ export default function GradeSheet({ user }) {
                         {isPGLayout ? (
                           <>
                             {(() => {
-                              const m = getPGRowMarks(course, deptKeyForPgTable);
+                              const semIndex = Math.max(0, Number(selectedSem) - 1);
+                              const m = getPGRowMarks(course, deptKeyForPgTable, { semesterIndex: semIndex });
                               return (
                                 <>
                                   <td>{m.midFm}</td>
@@ -781,7 +782,10 @@ export default function GradeSheet({ user }) {
                     {isPGLayout ? (
                       <>
                         {(() => {
-                          const t = sumPGTotals(marksheetData?.courses || [], deptKeyForPgTable);
+                          const semIndex = Math.max(0, Number(selectedSem) - 1);
+                          const t = sumPGTotals(marksheetData?.courses || [], deptKeyForPgTable, {
+                            semesterIndex: semIndex,
+                          });
                           return (
                             <>
                               <td><strong>{t.midFm}</strong></td>

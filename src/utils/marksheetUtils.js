@@ -107,7 +107,7 @@ const CHEMISTRY_PRACTICAL_ONLY_BY_SEM = {
   0: new Set(['PAPER1.4', 'PAPER1.5']),
   1: new Set(['CH-411', 'CH-412']),
   2: new Set(['CH-503', 'CH-504']),
-  3: new Set(['CH-512']),
+  3: new Set(['CH-512', 'CH-513']),
 };
 
 export const isChemistryPracticalOnlyPaper = (course, deptKey, semesterIndex) => {
@@ -134,12 +134,14 @@ export const isChemistryPracticalOnlyPaper = (course, deptKey, semesterIndex) =>
 };
 
 /**
- * Chemistry practical row: score may be in practicalMark OR finalMark (end sem) in DB.
- * Prefer whichever field has the real mark (> 0), then fall back to 0 / empty.
+ * Chemistry practical row: score shown in END SEM (practicalMark or finalMark in DB).
+ * Ignore midsemMark/practicalMark when they are 0 but finalMark/totalMark has the real score.
  */
 export const getChemistryPracticalEndSemMs = (course) => {
-  const end = toNum(course?.endsem ?? course?.theory ?? course?.finalMark);
   const practical = toNum(course?.practical ?? course?.practicalMark);
+  const end = toNum(
+    course?.endsem ?? course?.theory ?? course?.finalMark ?? course?.final
+  );
   const total = toNum(course?.marks ?? course?.totalMark);
 
   if (practical != null && practical > 0) return practical;
@@ -267,14 +269,17 @@ export function getPGRowMarks(course, deptKey, options = {}) {
 
   /** Chemistry practical papers (sem1 PAPER1.4/1.5, sem2 CH-411/412, etc.): FM 50, empty mid */
   if (isChemistryPracticalOnlyPaper(course, deptKey, semesterIndex)) {
-    const endSemMs = getChemistryPracticalEndSemMs(course);
+    let endSemMs = getChemistryPracticalEndSemMs(course);
+    if ((endSemMs === '' || endSemMs === 0) && total != null && total > 0) {
+      endSemMs = total;
+    }
     return {
       midFm: '',
       midMs: '',
       endFm: 50,
       endMs: endSemMs === '' ? '' : endSemMs,
       totalFm: 50,
-      totalMs: total != null ? total : endSemMs === '' ? '' : endSemMs,
+      totalMs: total != null && total > 0 ? total : endSemMs === '' ? '' : endSemMs,
     };
   }
 
@@ -293,7 +298,7 @@ export function getPGRowMarks(course, deptKey, options = {}) {
   const fm = getTheoryFullMarksByDept(deptKey);
   return {
     midFm: fm.midFm,
-    midMs: mid ?? '',
+    midMs: mid != null && mid > 0 ? mid : '',
     endFm: fm.endFm,
     endMs: end ?? '',
     totalFm: fm.totalFm,
