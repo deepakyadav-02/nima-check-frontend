@@ -133,9 +133,22 @@ export const isChemistryPracticalOnlyPaper = (course, deptKey, semesterIndex) =>
   return false;
 };
 
-const getChemistryPracticalEndSemMs = (course, mid, end, practical, total) => {
-  const v = end ?? practical ?? mid ?? total;
-  return v == null || v === '' ? '' : v;
+/**
+ * Chemistry practical row: score may be in practicalMark OR finalMark (end sem) in DB.
+ * Prefer whichever field has the real mark (> 0), then fall back to 0 / empty.
+ */
+export const getChemistryPracticalEndSemMs = (course) => {
+  const end = toNum(course?.endsem ?? course?.theory ?? course?.finalMark);
+  const practical = toNum(course?.practical ?? course?.practicalMark);
+  const total = toNum(course?.marks ?? course?.totalMark);
+
+  if (practical != null && practical > 0) return practical;
+  if (end != null && end > 0) return end;
+  if (total != null && total > 0) return total;
+  if (practical != null) return practical;
+  if (end != null) return end;
+  if (total != null) return total;
+  return '';
 };
 
 /** Geology PAPER4.4: midsem + practical; END SEM column shows practical mark. */
@@ -254,14 +267,14 @@ export function getPGRowMarks(course, deptKey, options = {}) {
 
   /** Chemistry practical papers (sem1 PAPER1.4/1.5, sem2 CH-411/412, etc.): FM 50, empty mid */
   if (isChemistryPracticalOnlyPaper(course, deptKey, semesterIndex)) {
-    const endSemMs = getChemistryPracticalEndSemMs(course, mid, end, practical, total);
+    const endSemMs = getChemistryPracticalEndSemMs(course);
     return {
       midFm: '',
       midMs: '',
       endFm: 50,
       endMs: endSemMs === '' ? '' : endSemMs,
       totalFm: 50,
-      totalMs: total ?? endSemMs ?? '',
+      totalMs: total != null ? total : endSemMs === '' ? '' : endSemMs,
     };
   }
 

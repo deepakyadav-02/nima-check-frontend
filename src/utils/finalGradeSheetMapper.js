@@ -8,6 +8,8 @@ import {
   getGeologyPaper44EndSemMs,
   isCommerceSem4ProjectPaper,
   getCommerceProjectEndSemMs,
+  isChemistryPracticalOnlyPaper,
+  getChemistryPracticalEndSemMs,
 } from './marksheetUtils';
 import { COLLEGE_TITLE_FULL } from '../constants/collegeHeader';
 
@@ -87,6 +89,10 @@ const courseToPaper = (course, deptKey, semesterIndex) => {
   if (isCommerceSem4ProjectPaper(course, deptKey, semesterIndex)) {
     const projectEnd = getCommerceProjectEndSemMs(course);
     if (projectEnd !== '') endSem = projectEnd;
+  }
+  if (isChemistryPracticalOnlyPaper(course, deptKey, semesterIndex)) {
+    const practicalEnd = getChemistryPracticalEndSemMs(course);
+    if (practicalEnd !== '') endSem = practicalEnd;
   }
 
   return {
