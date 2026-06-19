@@ -622,6 +622,7 @@ export default function GradeSheet({ user }) {
                 : `FIRST-SEMESTER(ADMISSION-BATCH${selectedYear})`}
             </p>
           </div>
+          <div className="document-header-spacer" aria-hidden="true"></div>
         </div>
 
         {/* Student Information Block */}
