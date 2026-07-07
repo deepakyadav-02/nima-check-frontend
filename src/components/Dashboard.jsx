@@ -158,6 +158,19 @@ export default function Dashboard({ user }) {
             <div className="card-arrow">→</div>
           </div>
 
+          {/* Fee Payment */}
+          <div className="dashboard-card" onClick={() => navigate('/fee-payment')}>
+            <div className="card-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+            </div>
+            <h3>Fee Payment</h3>
+            <p>View fee breakdown and pay your college fees online</p>
+            <div className="card-arrow">→</div>
+          </div>
+
           {/* Attendance */}
           <div className="dashboard-card coming-soon">
             <div className="card-icon">

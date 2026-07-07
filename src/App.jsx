@@ -6,7 +6,9 @@ import AdmitCard from './components/AdmitCard';
 import Profile from './components/Profile';
 import GradeSheet from './components/GradeSheet';
 import FinalGradeSheet from './components/FinalGradeSheet';
+import FeePayment from './components/FeePayment';
 import PGGradeSheetQRVerify from './components/PGGradeSheetQRVerify';
+import { isTokenValid, clearAuth } from './utils/auth';
 import './App.css';
 
 function App() {
@@ -14,14 +16,17 @@ function App() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      console.log('User already logged in from localStorage:', userData);
+
+    if (token && userData && isTokenValid(token)) {
       setIsAuthenticated(true);
       setUser(JSON.parse(userData));
+      return;
+    }
+
+    if (token) {
+      clearAuth();
     }
   }, []);
 
@@ -118,6 +123,14 @@ function App() {
                 <FinalGradeSheet user={user} /> : 
                 <Navigate to="/login" replace />
               } 
+            />
+            <Route
+              path="/fee-payment"
+              element={
+                isAuthenticated ?
+                <FeePayment user={user} /> :
+                <Navigate to="/login" replace />
+              }
             />
             <Route
               path="/verify/pg-grade-sheet/:slNo"

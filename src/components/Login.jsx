@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import config from '../config';
 import "./Login.css";
@@ -8,6 +8,14 @@ export default function Login({ onLogin }) {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const redirectMessage = sessionStorage.getItem('auth_redirect_message');
+    if (redirectMessage) {
+      setError(redirectMessage);
+      sessionStorage.removeItem('auth_redirect_message');
+    }
+  }, []);
 
   const handleDateChange = (e) => {
     const input = e.target.value;
@@ -80,7 +88,9 @@ export default function Login({ onLogin }) {
       }
     } catch (err) {
       console.error('Login error:', err);
-      if (err.response?.data?.message) {
+      if (err.code === 'ERR_NETWORK' || !err.response) {
+        setError('Cannot reach the server. Make sure the backend is running on port 5001.');
+      } else if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err.response?.status === 404) {
         setError('Student not found. Please check your Roll No and Date of Birth.');

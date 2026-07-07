@@ -18,7 +18,12 @@ const config = {
     PG_SECOND_SEM_2024: '/pg-2ndsem2024',
     PG_ALL_SEMESTERS: '/pg/all-semesters',
     UPLOAD_IMAGE: '/students/upload-image',
-    DELETE_IMAGE: '/students/delete-image'
+    DELETE_IMAGE: '/students/delete-image',
+    FEE_PAYMENT_CONFIG: '/fee-payment/config',
+    FEE_PAYMENT_BREAKDOWN: '/fee-payment/breakdown',
+    FEE_PAYMENT_CREATE_ORDER: '/fee-payment/create-order',
+    FEE_PAYMENT_VERIFY: '/fee-payment/verify',
+    FEE_PAYMENT_HISTORY: '/fee-payment/my-payments'
   }
 };
 

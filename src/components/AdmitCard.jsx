@@ -23,15 +23,30 @@ const AdmitCard = ({ user }) => {
   const [abcMessage, setAbcMessage] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoMessage, setPhotoMessage] = useState('');
+  const [availableSemesters, setAvailableSemesters] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState('');
+  const [semesterLoading, setSemesterLoading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const fetchStudentData = async () => {
-    setLoading(true);
+  const fetchStudentData = async (semesterKey = selectedSemester) => {
+    setLoading(!studentData);
+    setSemesterLoading(!!studentData);
     setError('');
     try {
       const token = localStorage.getItem('token');
+      const params = new URLSearchParams({
+        autonomousRollNo: user.autonomousRollNo,
+      });
+
+      if (semesterKey) {
+        params.append('semester', semesterKey);
+      }
+      if (user?.studentType) {
+        params.append('studentType', user.studentType);
+      }
+
       const response = await axios.get(
-        `${config.API_BASE_URL}${config.API_ENDPOINTS.ADMIT_CARD}?autonomousRollNo=${user.autonomousRollNo}`,
+        `${config.API_BASE_URL}${config.API_ENDPOINTS.ADMIT_CARD}?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -41,10 +56,10 @@ const AdmitCard = ({ user }) => {
 
       console.log('Admit card API response:', response.data);
 
-      // Backend returns student data directly, not wrapped in success/student fields
       if (response.data && response.data.autonomousRollNo) {
         setStudentData(response.data);
-        // Set profile image if available from database
+        setAvailableSemesters(response.data.availableSemesters || []);
+        setSelectedSemester(response.data.semesterKey || semesterKey || '');
         if (response.data.profileImage) {
           setProfileImage(response.data.profileImage);
         }
@@ -60,7 +75,14 @@ const AdmitCard = ({ user }) => {
       }
     } finally {
       setLoading(false);
+      setSemesterLoading(false);
     }
+  };
+
+  const handleSemesterChange = async (event) => {
+    const nextSemester = event.target.value;
+    setSelectedSemester(nextSemester);
+    await fetchStudentData(nextSemester);
   };
   
   useEffect(() => {
@@ -160,24 +182,21 @@ const AdmitCard = ({ user }) => {
   };
 
   const getStream = () => {
-    // For batch 2025 students (both UG and PG), use Stream field directly
     if (studentData?.batch === '2025' && studentData?.Stream) {
       return studentData.Stream;
     }
-    
-    // For older students, derive from Department
+
     if (!studentData?.Department) return '';
-    
+
     const department = studentData.Department.trim();
-    
-    // ARTS departments
-    const artsDepartments = ['Economics', 'Education', 'English', 'History', 'Odia', 'Political Science', 'Psychology', 'Sanskrit'];
-    if (artsDepartments.includes(department)) return 'ARTS';
-    
-    // SCIENCE departments
-    const scienceDepartments = ['Botany', 'Chemistry', 'Geology', 'Mathematics', 'Physics', 'Zoology'];
-    if (scienceDepartments.includes(department)) return 'SCIENCE';
-    
+    const deptLower = department.toLowerCase();
+
+    const artsDepartments = ['economics', 'education', 'english', 'history', 'odia', 'political science', 'psychology', 'sanskrit'];
+    if (artsDepartments.includes(deptLower)) return 'ARTS';
+
+    const scienceDepartments = ['botany', 'chemistry', 'geology', 'mathematics', 'physics', 'zoology'];
+    if (scienceDepartments.includes(deptLower)) return 'SCIENCE';
+
     return department;
   };
 
@@ -332,22 +351,14 @@ const AdmitCard = ({ user }) => {
   const stream = getStream();
   const isPG = isPGStudent();
 
-  // Check if download is allowed
-  const canDownload = () => {
-    const hasProfileImage = !!profileImage;
-    const hasAbcId = !!(studentData?.ABC_ID && studentData.ABC_ID !== null && studentData.ABC_ID !== '');
-    return hasProfileImage && hasAbcId;
-  };
+  // Download allowed when profile photo is uploaded; ABC ID is optional but encouraged
+  const canDownload = () => !!profileImage;
 
   const getDownloadRestrictionMessage = () => {
-    const messages = [];
     if (!profileImage) {
-      messages.push('Please upload your profile photo');
+      return 'Please upload your profile photo';
     }
-    if (!studentData?.ABC_ID || studentData.ABC_ID === null || studentData.ABC_ID === '') {
-      messages.push('Please register your ABC ID');
-    }
-    return messages.length > 0 ? messages.join(' and ') : '';
+    return '';
   };
 
   const handleDownloadClick = () => {
@@ -483,6 +494,25 @@ const AdmitCard = ({ user }) => {
         </div>
       ) : (
         <div className="preview-container">
+          {availableSemesters.length > 0 && (
+            <div className="semester-selector">
+              <label htmlFor="semester-select">Select Semester</label>
+              <select
+                id="semester-select"
+                value={selectedSemester}
+                onChange={handleSemesterChange}
+                disabled={semesterLoading}
+              >
+                {availableSemesters.map((sem) => (
+                  <option key={sem.key} value={sem.key}>
+                    {sem.label}
+                  </option>
+                ))}
+              </select>
+              {semesterLoading && <span className="semester-loading">Updating admit card...</span>}
+            </div>
+          )}
+
           <div className="admit-card" ref={admitCardRef}>
             <div className="card-header">
               <div className="logo-box">
@@ -491,7 +521,7 @@ const AdmitCard = ({ user }) => {
               <div className="header-text">
                 <CollegeNameHeading as="h2" />
                 <h3>ADMIT CARD (BATCH -{studentData.batch || '2024'})</h3>
-                <h3>EXAMINATION-2026</h3>
+                <h3>{studentData.semesterLabel ? `${studentData.semesterLabel.toUpperCase()} - ` : ''}EXAMINATION-2026</h3>
               </div>
             </div>
 
@@ -627,115 +657,33 @@ const AdmitCard = ({ user }) => {
                     </div>
                   </div>
                 )
+              ) : studentData.subjects?.length > 0 ? (
+                <div className="subjects-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        {studentData.subjects.map((subject) => (
+                          <th key={subject.field}>{subject.label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        {studentData.subjects.map((subject) => (
+                          <td key={subject.field}>{subject.value || ''}</td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               ) : (
-                // UG Students - Check if batch 2025 (first year) to show first semester subjects
-                studentData.batch === '2025' ? (
-                  // Check if BBA student (Stream === "BBA") to show BBA subjects, otherwise show regular UG subjects
-                  studentData.Stream === 'BBA' ? (
-                    <div className="subjects-table">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>CC-101</th>
-                            <th>CC-102</th>
-                            <th>CC-103</th>
-                            <th>MDE-101</th>
-                            <th>AEC-101</th>
-                            <th>AEC-102</th>
-                            <th>VAC-101</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td>{studentData['CC-101'] || ''}</td>
-                            <td>{studentData['CC-102'] || ''}</td>
-                            <td>{studentData['CC-103'] || ''}</td>
-                            <td>{studentData['MDE-101'] || ''}</td>
-                            <td>{studentData['AEC-101'] || ''}</td>
-                            <td>{studentData['AEC-102'] || ''}</td>
-                            <td>{studentData['VAC-101'] || ''}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="subjects-table">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Core-1-Major-1</th>
-                            <th>Core-1-Major-2</th>
-                            <th>Core-2-Minor-1</th>
-                            <th>Multidisciplinary-1</th>
-                            <th>AEC-I</th>
-                            <th>VAC-I</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td>{studentData['Core-1-Major-1'] || ''}</td>
-                            <td>{studentData['Core-1-Major-2'] || ''}</td>
-                            <td>{studentData['Core-2-Minor-1'] || ''}</td>
-                            <td>{studentData['Multidisciplinary-1'] || ''}</td>
-                            <td>{studentData['AEC-I'] || ''}</td>
-                            <td>{studentData['VAC-I'] || ''}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  )
-                ) : (
-                  <div className="subjects-table">
-                    <table>
-                      <thead>
-                        <tr>
-                          {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
-                            <>
-                              <th>CC-301</th>
-                              <th>CC-302</th>
-                              <th>CC-303</th>
-                              <th>MDE-301</th>
-                              <th>SEC-301</th>
-                              <th>VAC-301</th>
-                            </>
-                          ) : (
-                            <>
-                              <th>Major-CP-5</th>
-                              <th>Major-CP-6</th>
-                              <th>Major-CP-7</th>
-                              <th>MINOR-3</th>
-                              <th>Multi Disciplinary-3</th>
-                              <th>VAC-2</th>
-                            </>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          {(studentData.Department && studentData.Department.trim() === 'BBA') ? (
-                            <>
-                              <td>{studentData['CC-301'] || ''}</td>
-                              <td>{studentData['CC-302'] || ''}</td>
-                              <td>{studentData['CC-303'] || ''}</td>
-                              <td>{studentData['MDE-301'] || ''}</td>
-                              <td>{studentData['SEC-301'] || ''}</td>
-                              <td>{studentData['VAC-301'] || ''}</td>
-                            </>
-                          ) : (
-                            <>
-                              <td>{studentData['Major-CP-5'] || ''}</td>
-                              <td>{studentData['Major-CP-6'] || ''}</td>
-                              <td>{studentData['Major-CP-7'] || ''}</td>
-                              <td>{studentData['MINOR-3'] || ''}</td>
-                              <td>{studentData['Multi Disciplinary-3'] || ''}</td>
-                              <td>{studentData['VAC-2'] || ''}</td>
-                            </>
-                          )}
-                        </tr>
-                      </tbody>
-                    </table>
+                <div className="course-section">
+                  <div className="course-row">
+                    <span className="label">SUBJECTS</span>
+                    <span className="colon">:</span>
+                    <span className="value">No semester subject data available</span>
                   </div>
-                )
+                </div>
               )}
             </div>
 
@@ -817,11 +765,10 @@ const AdmitCard = ({ user }) => {
                 </div>
               )}
 
-              {/* ABC ID Submission */}
               {(!studentData?.ABC_ID || studentData.ABC_ID === null || studentData.ABC_ID === '') && (
-                <div className="requirement-item">
+                <div className="requirement-item optional-requirement">
                   <div className="requirement-header">
-                    <h4>Register ABC ID</h4>
+                    <h4>Register ABC ID (Optional)</h4>
                   </div>
                   <div className="requirement-content">
                     {!showAbcForm ? (
