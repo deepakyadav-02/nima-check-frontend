@@ -235,8 +235,12 @@ const AdmitCard = ({ user }) => {
   };
 
   const isPGStudent = () => {
-    // Check if it's a PG student by roll number pattern or studentType
-    if (studentData?.studentType === 'PG2025' || studentData?.studentType === 'PG') {
+    // Check if it's a PG student by studentType
+    if (
+      studentData?.studentType === 'PG2025' ||
+      studentData?.studentType === 'PG' ||
+      studentData?.studentType === 'PG2ND2025'
+    ) {
       return true;
     }
     // Check roll number patterns for PG students
@@ -593,7 +597,27 @@ const AdmitCard = ({ user }) => {
               </div>
 
               {isPG ? (
-                // PG Students - Check if batch 2025 (first year) to show PAPER fields
+                // PG 1st & 2nd Sem 2025 — uses same subjects[] array as UG (built by admitCardService)
+                (studentData.studentType === 'PG2ND2025' || studentData.studentType === 'PG2025') && studentData.subjects?.length > 0 ? (
+                  <div className="subjects-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          {studentData.subjects.map((subject) => (
+                            <th key={subject.field}>{subject.label}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          {studentData.subjects.map((subject) => (
+                            <td key={subject.field}>{subject.value || ''}</td>
+                          ))}
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : // PG Students - Check if batch 2025 (first year) to show PAPER fields
                 studentData.batch === '2025' ? (
                   <div className="subjects-table">
                     <table>
