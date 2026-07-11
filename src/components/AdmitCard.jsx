@@ -545,12 +545,12 @@ const AdmitCard = ({ user }) => {
                   <div className="detail-row">
                     <span className="label">EXAM ROLL NUMBER</span>
                     <span className="colon">:</span>
-                    <span className="value">{studentData.rollNo || studentData['College Roll No'] || studentData['Roll No']}</span>
+                    <span className="value">{studentData.autonomousRollNo}</span>
                   </div>
                   <div className="detail-row">
                     <span className="label">COLLEGE NUMBER</span>
                     <span className="colon">:</span>
-                    <span className="value">{studentData.autonomousRollNo}</span>
+                    <span className="value">{studentData.rollNo || studentData['College Roll No'] || studentData['Roll No']}</span>
                     {majorSubject && (
                       <span className="core-subject">
                         DEPARTMENT - {majorSubject}
