@@ -174,15 +174,38 @@ const AdmitCard = ({ user }) => {
   };
 
 
+  /**
+   * Extracts the 2-digit batch code from a roll number on the frontend.
+   * NACBCA25015 → '25', NACBCA24015 → '24', 111NAC... → 'pg'
+   */
+  const extractBatchCodeFromRollNo = (rollNo) => {
+    const roll = String(rollNo || '').trim().toUpperCase();
+    if (/^\d+NAC/i.test(roll) || roll.startsWith('NACMFC')) return 'pg';
+    const ugMatch = roll.match(/^NAC[A-Z]+(\d{2})\d+/);
+    if (ugMatch) return ugMatch[1];
+    const bbaMatch = roll.match(/^BBA-(\d{2})-/);
+    if (bbaMatch) return bbaMatch[1];
+    return null;
+  };
+
+  const getBatchYear = () => {
+    if (studentData?.batch) return String(studentData.batch).trim();
+    const code = extractBatchCodeFromRollNo(studentData?.autonomousRollNo);
+    if (code && code !== 'pg') return `20${code}`;
+    return '2024';
+  };
+
   const getStudentType = () => {
     if (studentData?.autonomousRollNo?.includes('BBA')) return 'BBA';
-    if (studentData?.autonomousRollNo?.includes('NAC24')) return 'UG';
-    if (studentData?.autonomousRollNo?.includes('111NAC')) return 'PG';
+    const code = extractBatchCodeFromRollNo(studentData?.autonomousRollNo);
+    if (code === 'pg') return 'PG';
+    // Both 2024 and 2025 batch UG students
+    if (code === '24' || code === '25') return 'UG';
     return 'STUDENT';
   };
 
   const getStream = () => {
-    if (studentData?.batch === '2025' && studentData?.Stream) {
+    if (getBatchYear() === '2025' && studentData?.Stream) {
       return studentData.Stream;
     }
 
@@ -524,7 +547,7 @@ const AdmitCard = ({ user }) => {
               </div>
               <div className="header-text">
                 <CollegeNameHeading as="h2" />
-                <h3>ADMIT CARD (BATCH -{studentData.batch || '2024'})</h3>
+                <h3>ADMIT CARD (BATCH -{getBatchYear()})</h3>
                 <h3>{studentData.semesterLabel ? `${studentData.semesterLabel.toUpperCase()} - ` : ''}EXAMINATION-2026</h3>
               </div>
             </div>
@@ -533,7 +556,7 @@ const AdmitCard = ({ user }) => {
               <div className="student-details">
                 <div className="details-left">
                   {/* Show Stream for batch 2025 students (both UG and PG) or for older UG students */}
-                  {(studentData.batch === '2025' || !isPG) && stream && (
+                  {(getBatchYear() === '2025' || !isPG) && stream && (
                     <div className="detail-row">
                       <span className="label">STREAM</span>
                       <span className="colon">:</span>
@@ -618,7 +641,7 @@ const AdmitCard = ({ user }) => {
                     </table>
                   </div>
                 ) : // PG Students - Check if batch 2025 (first year) to show PAPER fields
-                studentData.batch === '2025' ? (
+                getBatchYear() === '2025' ? (
                   <div className="subjects-table">
                     <table>
                       <thead>
