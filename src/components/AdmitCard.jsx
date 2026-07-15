@@ -18,7 +18,6 @@ const AdmitCard = ({ user }) => {
   
   // ABC ID and Photo Upload states
   const [abcId, setAbcId] = useState('');
-  const [showAbcForm, setShowAbcForm] = useState(false);
   const [isSubmittingAbc, setIsSubmittingAbc] = useState(false);
   const [abcMessage, setAbcMessage] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -27,6 +26,7 @@ const AdmitCard = ({ user }) => {
   const [selectedSemester, setSelectedSemester] = useState('');
   const [semesterLoading, setSemesterLoading] = useState(false);
   const fileInputRef = useRef(null);
+  // showAbcForm removed — ABC ID form is always visible when ABC ID is missing
 
   const fetchStudentData = async (semesterKey = selectedSemester) => {
     setLoading(!studentData);
@@ -388,14 +388,17 @@ const AdmitCard = ({ user }) => {
   const stream = getStream();
   const isPG = isPGStudent();
 
-  // Download allowed when profile photo is uploaded; ABC ID is optional but encouraged
-  const canDownload = () => !!profileImage;
+  const hasAbcId = !!(studentData?.ABC_ID && studentData.ABC_ID !== null && studentData.ABC_ID !== '');
+
+  // Download requires BOTH profile photo AND ABC ID
+  const canDownload = () => !!profileImage && hasAbcId;
 
   const getDownloadRestrictionMessage = () => {
-    if (!profileImage) {
-      return 'Please upload your profile photo';
-    }
-    return '';
+    const missing = [];
+    if (!profileImage) missing.push('upload your profile photo');
+    if (!hasAbcId) missing.push('register your ABC ID');
+    if (missing.length === 0) return '';
+    return `Please ${missing.join(' and ')}`;
   };
 
   const handleDownloadClick = () => {
@@ -433,7 +436,6 @@ const AdmitCard = ({ user }) => {
       );
 
       setAbcMessage('ABC ID submitted successfully!');
-      setShowAbcForm(false);
       setAbcId('');
       
       // Refresh student data to get updated ABC_ID
@@ -786,16 +788,16 @@ const AdmitCard = ({ user }) => {
             </div>
           </div>
 
-          {/* Requirements Section - Show when requirements are missing */}
-          {!canDownload() && (
+          {/* Requirements Section - Always visible when any requirement is missing */}
+          {(!profileImage || !hasAbcId) && (
             <div className="requirements-section">
               <h3>Complete Requirements to Download Admit Card</h3>
-              
+
               {/* Profile Photo Upload */}
               {!profileImage && (
                 <div className="requirement-item">
                   <div className="requirement-header">
-                    <h4>Upload Profile Photo</h4>
+                    <h4>📷 Upload Profile Photo <span className="mandatory-badge">Required</span></h4>
                   </div>
                   <div className="requirement-content">
                     <input
@@ -822,59 +824,38 @@ const AdmitCard = ({ user }) => {
                 </div>
               )}
 
-              {(!studentData?.ABC_ID || studentData.ABC_ID === null || studentData.ABC_ID === '') && (
-                <div className="requirement-item optional-requirement">
+              {/* ABC ID Registration - Mandatory */}
+              {!hasAbcId && (
+                <div className="requirement-item">
                   <div className="requirement-header">
-                    <h4>Register ABC ID (Optional)</h4>
+                    <h4>🪪 ABC ID Registration <span className="mandatory-badge">Required</span></h4>
                   </div>
                   <div className="requirement-content">
-                    {!showAbcForm ? (
-                      <button
-                        type="button"
-                        className="requirement-btn"
-                        onClick={() => setShowAbcForm(true)}
-                      >
-                        Add ABC ID
-                      </button>
-                    ) : (
-                      <form onSubmit={handleAbcIdSubmit} className="abc-id-form">
-                        <input
-                          type="text"
-                          value={abcId}
-                          onChange={(e) => setAbcId(e.target.value)}
-                          placeholder="Enter your ABC ID (min 5 characters)"
-                          required
-                          minLength={5}
-                          className="abc-id-input"
-                        />
-                        <div className="abc-form-actions">
-                          <button
-                            type="button"
-                            className="requirement-btn secondary"
-                            onClick={() => {
-                              setShowAbcForm(false);
-                              setAbcId('');
-                              setAbcMessage('');
-                            }}
-                            disabled={isSubmittingAbc}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            className="requirement-btn primary"
-                            disabled={isSubmittingAbc}
-                          >
-                            {isSubmittingAbc ? 'Submitting...' : 'Submit'}
-                          </button>
+                    <form onSubmit={handleAbcIdSubmit} className="abc-id-form">
+                      <input
+                        type="text"
+                        value={abcId}
+                        onChange={(e) => setAbcId(e.target.value)}
+                        placeholder="Enter your 12-digit ABC ID"
+                        required
+                        minLength={5}
+                        className="abc-id-input"
+                      />
+                      <div className="abc-form-actions">
+                        <button
+                          type="submit"
+                          className="requirement-btn primary"
+                          disabled={isSubmittingAbc}
+                        >
+                          {isSubmittingAbc ? 'Submitting...' : 'Register ABC ID'}
+                        </button>
+                      </div>
+                      {abcMessage && (
+                        <div className={`requirement-message ${abcMessage.includes('success') ? 'success' : 'error'}`}>
+                          {abcMessage}
                         </div>
-                        {abcMessage && (
-                          <div className={`requirement-message ${abcMessage.includes('success') ? 'success' : 'error'}`}>
-                            {abcMessage}
-                          </div>
-                        )}
-                      </form>
-                    )}
+                      )}
+                    </form>
                   </div>
                 </div>
               )}

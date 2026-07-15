@@ -1094,3 +1094,21 @@
   gap: 10px;
   justify-content: flex-end;
 }
+
+.mandatory-badge {
+  display: inline-block;
+  background: #dc3545;
+  color: white !important;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  vertical-align: middle;
+  letter-spacing: 0.5px;
+}
+
+
+.requirements-section .requirement-item {
+  border-left: 4px solid #dc3545;
+}
