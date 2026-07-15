@@ -175,14 +175,24 @@ const AdmitCard = ({ user }) => {
 
 
   /**
-   * Extracts the 2-digit batch code from a roll number on the frontend.
-   * NACBCA25015 → '25', NACBCA24015 → '24', 111NAC... → 'pg'
+   * Extracts the 2-digit batch code from a roll number.
+   * UG:  NACBCA25015 → '25', 03NAC25001 → '25', 03NAC24001 → '24'
+   * PG:  111NAC..., 153NAC..., 155NAC..., 156NAC..., 181NAC..., NACMFC... → 'pg'
    */
   const extractBatchCodeFromRollNo = (rollNo) => {
     const roll = String(rollNo || '').trim().toUpperCase();
-    if (/^\d+NAC/i.test(roll) || roll.startsWith('NACMFC')) return 'pg';
-    const ugMatch = roll.match(/^NAC[A-Z]+(\d{2})\d+/);
-    if (ugMatch) return ugMatch[1];
+    // PG: specific 3-digit institute codes before NAC
+    if (
+      roll.includes('111NAC') || roll.includes('153NAC') || roll.includes('155NAC') ||
+      roll.includes('156NAC') || roll.includes('181NAC') || roll.startsWith('NACMFC')
+    ) return 'pg';
+    // UG: NAC + course letters + 2-digit batch
+    const ugNacFirst = roll.match(/^NAC[A-Z]+(\d{2})/);
+    if (ugNacFirst) return ugNacFirst[1];
+    // UG: 2-digit college code + NAC + 2-digit batch
+    const ugCollegeFirst = roll.match(/^\d{2}NAC(\d{2})/);
+    if (ugCollegeFirst) return ugCollegeFirst[1];
+    // Standalone BBA
     const bbaMatch = roll.match(/^BBA-(\d{2})-/);
     if (bbaMatch) return bbaMatch[1];
     return null;
